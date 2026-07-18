@@ -21,8 +21,8 @@ def stream_reply(
     parts: list[str] = []
     usage: Usage | None = None
     for chunk in stream:
-        if chunk.choices and chunk.choices[0].delta.content:
-            delta = chunk.choices[0].delta.content
+        delta = chunk.choices[0].delta.content if chunk.choices else None
+        if delta:
             parts.append(delta)
             on_chunk(delta)
         # usage arrives only on the final chunk, via Groq's x_groq extension

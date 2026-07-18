@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from groq import APIError, Groq
 
 from lembrai.chat import MODEL, stream_reply
-from lembrai.cost import SessionStats, format_session_stats, format_usage_line
+from lembrai.cost import SessionStats, Usage, format_session_stats, format_usage_line
 from lembrai.history import Message, trimmed
 from lembrai.profile import PROFILE_PATH, build_system_prompt, load_profile
 
@@ -28,30 +28,31 @@ def create_client() -> Groq:
     return Groq(api_key=api_key)
 
 
-def print_streaming_chunk(text: str) -> None:
-    print(text, end="", flush=True)
-
-
 def respond(
     client: Groq,
     system_prompt: str,
     history: list[Message],
-    stats: SessionStats,
-) -> None:
+) -> tuple[str | None, Usage | None]:
     messages = [{"role": "system", "content": system_prompt}, *trimmed(history)]
     print("\nlembrai › ", end="", flush=True)
+    printed_any_chunk = False
+
+    def print_chunk(text: str) -> None:
+        nonlocal printed_any_chunk
+        printed_any_chunk = True
+        print(text, end="", flush=True)
+
     try:
-        reply, usage = stream_reply(client, messages, on_chunk=print_streaming_chunk)
+        reply, usage = stream_reply(client, messages, on_chunk=print_chunk)
+    except KeyboardInterrupt:
+        print(dim("\n[resposta interrompida — turno descartado]"))
+        return None, None
     except APIError as error:
-        # free-tier rate limits are routine: keep the session alive, drop the failed turn
-        history.pop()
-        print(dim(f"[erro na API: {error.message}]"))
-        return
+        partial_note = "resposta parcial descartada — " if printed_any_chunk else ""
+        print(dim(f"\n[erro na API: {partial_note}{error.message}]"))
+        return None, None
     print()
-    history.append({"role": "assistant", "content": reply})
-    if usage is not None:
-        stats.add(MODEL, usage)
-        print(dim(f"· {format_usage_line(MODEL, usage)}"))
+    return reply, usage
 
 
 def run_repl(client: Groq, system_prompt: str) -> SessionStats:
@@ -74,7 +75,16 @@ def run_repl(client: Groq, system_prompt: str) -> SessionStats:
             print(dim(format_session_stats(stats)))
             continue
         history.append({"role": "user", "content": user_input})
-        respond(client, system_prompt, history, stats)
+        reply, usage = respond(client, system_prompt, history)
+        if reply is None:
+            # failed or interrupted turn: drop the user message so history
+            # matches what the model will actually see next turn
+            history.pop()
+            continue
+        history.append({"role": "assistant", "content": reply})
+        stats.add_reply(MODEL, usage)
+        if usage is not None:
+            print(dim(f"· {format_usage_line(MODEL, usage)}"))
     return stats
 
 

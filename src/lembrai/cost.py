@@ -36,11 +36,15 @@ class SessionStats:
     cost_usd: float = 0.0
     replies: int = 0
 
-    def add(self, model: str, usage: Usage) -> None:
+    def add_reply(self, model: str, usage: Usage | None) -> None:
+        self.replies += 1
+        if usage is None:
+            return
         self.prompt_tokens += usage.prompt_tokens
         self.completion_tokens += usage.completion_tokens
-        self.cost_usd += estimated_cost_usd(model, usage) or 0.0
-        self.replies += 1
+        cost = estimated_cost_usd(model, usage)
+        if cost is not None:
+            self.cost_usd += cost
 
 
 def format_usage_line(model: str, usage: Usage) -> str:
@@ -58,8 +62,9 @@ def format_usage_line(model: str, usage: Usage) -> str:
 
 def format_session_stats(stats: SessionStats) -> str:
     total = stats.prompt_tokens + stats.completion_tokens
+    reply_word = "resposta" if stats.replies == 1 else "respostas"
     return (
-        f"{stats.replies} respostas · {total} tokens"
+        f"{stats.replies} {reply_word} · {total} tokens"
         f" ({stats.prompt_tokens} entrada / {stats.completion_tokens} saída)"
         f" · ~US$ {stats.cost_usd:.6f}"
     )
