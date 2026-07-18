@@ -1,0 +1,5 @@
+groq>=0.13
+python-dotenv>=1.0
+
+[dev]
+pytest>=8
