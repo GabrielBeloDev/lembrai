@@ -33,25 +33,25 @@ def estimated_cost_usd(model: str, usage: Usage) -> float | None:
 class SessionStats:
     prompt_tokens: int = 0
     completion_tokens: int = 0
-    cost_usd: float = 0.0
     replies: int = 0
 
-    def add_reply(self, model: str, usage: Usage | None) -> None:
+    def add_reply(self, usage: Usage | None) -> None:
         self.replies += 1
         if usage is None:
             return
         self.prompt_tokens += usage.prompt_tokens
         self.completion_tokens += usage.completion_tokens
-        cost = estimated_cost_usd(model, usage)
-        if cost is not None:
-            self.cost_usd += cost
+
+
+def token_breakdown(usage: Usage) -> str:
+    return (
+        f"{usage.total_tokens} tokens"
+        f" ({usage.prompt_tokens} entrada / {usage.completion_tokens} saída)"
+    )
 
 
 def format_usage_line(model: str, usage: Usage) -> str:
-    parts = [
-        f"{usage.total_tokens} tokens"
-        f" ({usage.prompt_tokens} entrada / {usage.completion_tokens} saída)"
-    ]
+    parts = [token_breakdown(usage)]
     cost = estimated_cost_usd(model, usage)
     if cost is not None:
         parts.append(f"~US$ {cost:.6f}")
@@ -60,11 +60,11 @@ def format_usage_line(model: str, usage: Usage) -> str:
     return " · ".join(parts)
 
 
-def format_session_stats(stats: SessionStats) -> str:
-    total = stats.prompt_tokens + stats.completion_tokens
+def format_session_stats(model: str, stats: SessionStats) -> str:
+    session_usage = Usage(stats.prompt_tokens, stats.completion_tokens)
     reply_word = "resposta" if stats.replies == 1 else "respostas"
-    return (
-        f"{stats.replies} {reply_word} · {total} tokens"
-        f" ({stats.prompt_tokens} entrada / {stats.completion_tokens} saída)"
-        f" · ~US$ {stats.cost_usd:.6f}"
-    )
+    parts = [f"{stats.replies} {reply_word}", token_breakdown(session_usage)]
+    cost = estimated_cost_usd(model, session_usage)
+    if cost is not None:
+        parts.append(f"~US$ {cost:.6f}")
+    return " · ".join(parts)

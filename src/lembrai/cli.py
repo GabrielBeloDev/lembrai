@@ -72,7 +72,7 @@ def run_repl(client: Groq, system_prompt: str) -> SessionStats:
             print(dim("histórico limpo"))
             continue
         if user_input == "/stats":
-            print(dim(format_session_stats(stats)))
+            print(dim(format_session_stats(MODEL, stats)))
             continue
         history.append({"role": "user", "content": user_input})
         reply, usage = respond(client, system_prompt, history)
@@ -82,7 +82,7 @@ def run_repl(client: Groq, system_prompt: str) -> SessionStats:
             history.pop()
             continue
         history.append({"role": "assistant", "content": reply})
-        stats.add_reply(MODEL, usage)
+        stats.add_reply(usage)
         if usage is not None:
             print(dim(f"· {format_usage_line(MODEL, usage)}"))
     return stats
@@ -96,4 +96,4 @@ def main() -> None:
         print(dim(NO_PROFILE_HINT))
     stats = run_repl(client, build_system_prompt(profile))
     if stats.replies:
-        print(dim(f"\nsessão: {format_session_stats(stats)}"))
+        print(dim(f"\nsessão: {format_session_stats(MODEL, stats)}"))

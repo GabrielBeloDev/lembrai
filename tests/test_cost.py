@@ -25,27 +25,24 @@ def test_total_tokens_sums_prompt_and_completion():
 
 def test_session_stats_accumulates_replies():
     stats = SessionStats()
-    stats.add_reply(MODEL, Usage(prompt_tokens=100, completion_tokens=50))
-    stats.add_reply(MODEL, Usage(prompt_tokens=200, completion_tokens=80))
+    stats.add_reply(Usage(prompt_tokens=100, completion_tokens=50))
+    stats.add_reply(Usage(prompt_tokens=200, completion_tokens=80))
     assert stats.prompt_tokens == 300
     assert stats.completion_tokens == 130
     assert stats.replies == 2
-    assert stats.cost_usd > 0
 
 
 def test_reply_without_usage_still_counts():
     stats = SessionStats()
-    stats.add_reply(MODEL, None)
+    stats.add_reply(None)
     assert stats.replies == 1
     assert stats.prompt_tokens == 0
-    assert stats.cost_usd == 0.0
 
 
-def test_unpriced_model_accumulates_tokens_but_no_cost():
+def test_session_stats_omit_cost_for_unpriced_model():
     stats = SessionStats()
-    stats.add_reply("unknown-model", Usage(prompt_tokens=10, completion_tokens=5))
-    assert stats.prompt_tokens == 10
-    assert stats.cost_usd == 0.0
+    stats.add_reply(Usage(prompt_tokens=10, completion_tokens=5))
+    assert "US$" not in format_session_stats("unknown-model", stats)
 
 
 def test_usage_line_shows_tokens_cost_and_time():
@@ -63,14 +60,15 @@ def test_usage_line_omits_cost_for_unknown_model():
 
 def test_session_stats_formatting_uses_singular_for_one_reply():
     stats = SessionStats()
-    stats.add_reply(MODEL, Usage(prompt_tokens=100, completion_tokens=50))
-    text = format_session_stats(stats)
+    stats.add_reply(Usage(prompt_tokens=100, completion_tokens=50))
+    text = format_session_stats(MODEL, stats)
     assert "1 resposta ·" in text
     assert "150 tokens" in text
+    assert "US$" in text
 
 
 def test_session_stats_formatting_uses_plural():
     stats = SessionStats()
-    stats.add_reply(MODEL, Usage(prompt_tokens=10, completion_tokens=5))
-    stats.add_reply(MODEL, Usage(prompt_tokens=10, completion_tokens=5))
-    assert "2 respostas" in format_session_stats(stats)
+    stats.add_reply(Usage(prompt_tokens=10, completion_tokens=5))
+    stats.add_reply(Usage(prompt_tokens=10, completion_tokens=5))
+    assert "2 respostas" in format_session_stats(MODEL, stats)
