@@ -79,6 +79,18 @@ def test_combined_usage_sums_tokens_and_time():
     assert total == Usage(prompt_tokens=30, completion_tokens=13, total_time=1.5)
 
 
+def test_combined_usage_sums_only_the_reported_times():
+    total = combined_usage([Usage(10, 5), Usage(20, 8, total_time=1.0)])
+    assert total == Usage(prompt_tokens=30, completion_tokens=13, total_time=1.0)
+
+
+def test_add_usage_accumulates_tokens_without_counting_a_reply():
+    stats = SessionStats()
+    stats.add_usage(Usage(prompt_tokens=10, completion_tokens=5))
+    assert stats.replies == 0
+    assert stats.prompt_tokens == 10
+
+
 def test_combined_usage_keeps_time_none_when_never_reported():
     total = combined_usage([Usage(10, 5), Usage(20, 8)])
     assert total is not None

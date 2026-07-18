@@ -1,3 +1,4 @@
+import inspect
 import json
 from datetime import datetime
 from pathlib import Path
@@ -73,6 +74,13 @@ class Toolbox:
         return json.loads(self._calendar_path.read_text(encoding="utf-8"))
 
     def create_event(self, title: str, date: str, time: str | None = None) -> str:
+        try:
+            datetime.strptime(date, "%Y-%m-%d")
+            if time is not None:
+                datetime.strptime(time, "%H:%M")
+        except (TypeError, ValueError):
+            # feed the format error back so the model can retry with valid values
+            return "Data ou hora em formato inválido: use YYYY-MM-DD e HH:MM."
         events = self._load_events()
         events.append({"title": title, "date": date, "time": time})
         events.sort(key=lambda event: (event["date"], event["time"] or ""))
@@ -88,12 +96,7 @@ class Toolbox:
         events = self._load_events()
         if not events:
             return "A agenda está vazia."
-        lines = [
-            f"- {event['date']}"
-            + (f" {event['time']}" if event["time"] else "")
-            + f": {event['title']}"
-            for event in events
-        ]
+        lines = [_format_event_line(event) for event in events]
         return "Eventos na agenda:\n" + "\n".join(lines)
 
     def send_email(self, to: str, subject: str, body: str) -> str:
@@ -105,7 +108,7 @@ class Toolbox:
         )
         return f"E-mail para {to} salvo na caixa de saída local ({path})."
 
-    def execute(self, name: str, arguments: dict[str, str]) -> str:
+    def execute(self, name: str, arguments: dict[str, object]) -> str:
         handlers = {
             "create_event": self.create_event,
             "list_events": self.list_events,
@@ -115,8 +118,14 @@ class Toolbox:
         if handler is None:
             return f"Ferramenta desconhecida: {name}."
         try:
-            return handler(**arguments)
+            # bind() rejects hallucinated argument names with feedback to the
+            # model, without masking genuine TypeErrors raised inside the handler
+            bound = inspect.signature(handler).bind(**arguments)
         except TypeError as error:
-            # the model may hallucinate argument names; feed the error back so
-            # it can retry instead of crashing the session
             return f"Argumentos inválidos para {name}: {error}"
+        return handler(*bound.args, **bound.kwargs)
+
+
+def _format_event_line(event: dict[str, str | None]) -> str:
+    when = f"{event['date']} {event['time']}" if event["time"] else event["date"]
+    return f"- {when}: {event['title']}"

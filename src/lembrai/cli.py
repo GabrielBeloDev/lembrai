@@ -70,32 +70,60 @@ def respond(
     messages.extend(trimmed(history))
     print("\nlembrai › ", end="", flush=True)
     printed_any_chunk = False
+    executed_tools = 0
 
     def print_chunk(text: str) -> None:
         nonlocal printed_any_chunk
         printed_any_chunk = True
         print(text, end="", flush=True)
 
-    def print_tool(name: str, arguments: dict[str, str]) -> None:
+    def print_tool(name: str, arguments: dict[str, object]) -> None:
+        nonlocal executed_tools
+        executed_tools += 1
         rendered = ", ".join(f"{key}={value!r}" for key, value in arguments.items())
         print(dim(f"\n[ferramenta: {name}({rendered})]"), flush=True)
 
+    def print_malformed_tool(name: str) -> None:
+        print(
+            dim(f"\n[ferramenta: {name} — argumentos malformados, pedindo correção]"),
+            flush=True,
+        )
+
+    def warn_kept_actions() -> None:
+        # discarding the turn does not undo tools that already ran; say so
+        if executed_tools:
+            print(
+                dim(
+                    f"[atenção: {executed_tools} ação(ões) de ferramenta "
+                    "já executada(s) foram mantidas]"
+                )
+            )
+
     try:
         reply_text, usages = run_agent_turn(
-            client, messages, toolbox, on_chunk=print_chunk, on_tool=print_tool
+            client,
+            messages,
+            toolbox,
+            on_chunk=print_chunk,
+            on_tool=print_tool,
+            on_malformed_tool=print_malformed_tool,
         )
     except KeyboardInterrupt:
         print(dim("\n[resposta interrompida — turno descartado]"))
+        warn_kept_actions()
         return None, None
     except APIError as error:
         partial_note = "resposta parcial descartada — " if printed_any_chunk else ""
         print(dim(f"\n[erro na API: {partial_note}{error.message}]"))
+        warn_kept_actions()
         return None, None
+    turn_usage = combined_usage(usages)
     if reply_text is None:
         print(dim("\n[limite de rodadas de ferramenta atingido — turno descartado]"))
-        return None, None
+        warn_kept_actions()
+        return None, turn_usage
     print()
-    return reply_text, combined_usage(usages)
+    return reply_text, turn_usage
 
 
 def run_repl(
@@ -135,7 +163,9 @@ def run_repl(
         )
         if reply is None:
             # failed or interrupted turn: drop the user message so history
-            # matches what the model will actually see next turn
+            # matches what the model will actually see next turn, but keep
+            # the tokens it cost
+            stats.add_usage(usage)
             history.pop()
             continue
         history.append({"role": "assistant", "content": reply})

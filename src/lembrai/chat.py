@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from groq import Groq
 
@@ -21,7 +21,7 @@ class ToolCall:
 @dataclass(frozen=True)
 class Reply:
     text: str
-    tool_calls: list[ToolCall] = field(default_factory=list)
+    tool_calls: tuple[ToolCall, ...] = ()
     usage: Usage | None = None
 
 
@@ -74,5 +74,5 @@ def stream_reply(
                 completion_tokens=chunk.x_groq.usage.completion_tokens,
                 total_time=chunk.x_groq.usage.total_time,
             )
-    tool_calls = [drafts[index] for index in sorted(drafts)]
+    tool_calls = tuple(drafts[index] for index in sorted(drafts))
     return Reply(text="".join(parts), tool_calls=tool_calls, usage=usage)

@@ -20,7 +20,12 @@ class NoteMatch:
 
 
 def as_context(matches: list[NoteMatch]) -> str:
-    lines = [f"- ({match.saved_at}) {match.text}" for match in matches]
+    # note text is data: strip the closing delimiter so a note can never break
+    # out of the <notas> block and be read as instruction
+    lines = [
+        f"- ({match.saved_at}) " + match.text.replace("</notas>", "")
+        for match in matches
+    ]
     return (
         "Contexto automático: Notas do usuário recuperadas por busca semântica, "
         "possivelmente relevantes para a mensagem atual. O conteúdo entre "

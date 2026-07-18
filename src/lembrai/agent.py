@@ -26,7 +26,7 @@ def _assistant_message(reply: Reply) -> Message:
     }
 
 
-def _parse_arguments(raw_arguments: str) -> dict[str, str] | None:
+def _parse_arguments(raw_arguments: str) -> dict[str, object] | None:
     try:
         parsed = json.loads(raw_arguments) if raw_arguments.strip() else {}
     except json.JSONDecodeError:
@@ -39,7 +39,8 @@ def run_agent_turn(
     base_messages: list[Message],
     toolbox: Toolbox,
     on_chunk: Callable[[str], None],
-    on_tool: Callable[[str, dict[str, str]], None],
+    on_tool: Callable[[str, dict[str, object]], None],
+    on_malformed_tool: Callable[[str], None],
 ) -> tuple[str | None, list[Usage]]:
     messages = list(base_messages)
     usages: list[Usage] = []
@@ -53,6 +54,7 @@ def run_agent_turn(
         for call in reply.tool_calls:
             arguments = _parse_arguments(call.arguments)
             if arguments is None:
+                on_malformed_tool(call.name)
                 result = f"Argumentos inválidos para {call.name}: JSON malformado."
             else:
                 on_tool(call.name, arguments)

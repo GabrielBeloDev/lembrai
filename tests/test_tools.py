@@ -46,6 +46,12 @@ def test_send_email_writes_to_the_outbox(tmp_path: Path):
     assert "caixa de saída local" in result
 
 
+def test_create_event_rejects_a_non_iso_date(tmp_path: Path):
+    result = make_toolbox(tmp_path).create_event("Dentista", "amanhã")
+    assert "formato inválido" in result
+    assert not (tmp_path / "calendar.json").exists()
+
+
 def test_execute_rejects_unknown_tool(tmp_path: Path):
     result = make_toolbox(tmp_path).execute("delete_everything", {})
     assert "Ferramenta desconhecida" in result
