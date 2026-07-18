@@ -4,13 +4,21 @@ import sys
 from dotenv import load_dotenv
 from groq import APIError, Groq
 
-from lembrai.chat import MODEL, stream_reply
-from lembrai.cost import SessionStats, Usage, format_session_stats, format_usage_line
+from lembrai.agent import run_agent_turn
+from lembrai.chat import MODEL
+from lembrai.cost import (
+    SessionStats,
+    Usage,
+    combined_usage,
+    format_session_stats,
+    format_usage_line,
+)
 from lembrai.embeddings import create_embedder
 from lembrai.history import Message, trimmed
 from lembrai.notes import NoteMatch, NoteStore, as_context
 from lembrai.onboarding import ask_profile, save_profile
 from lembrai.profile import PROFILE_PATH, build_system_prompt, load_profile
+from lembrai.tools import Toolbox
 
 BANNER = (
     "lembrai — seu assistente pessoal. "
@@ -54,6 +62,7 @@ def respond(
     system_prompt: str,
     history: list[Message],
     note_matches: list[NoteMatch],
+    toolbox: Toolbox,
 ) -> tuple[str | None, Usage | None]:
     messages: list[Message] = [{"role": "system", "content": system_prompt}]
     if note_matches:
@@ -67,8 +76,14 @@ def respond(
         printed_any_chunk = True
         print(text, end="", flush=True)
 
+    def print_tool(name: str, arguments: dict[str, str]) -> None:
+        rendered = ", ".join(f"{key}={value!r}" for key, value in arguments.items())
+        print(dim(f"\n[ferramenta: {name}({rendered})]"), flush=True)
+
     try:
-        reply, usage = stream_reply(client, messages, on_chunk=print_chunk)
+        reply_text, usages = run_agent_turn(
+            client, messages, toolbox, on_chunk=print_chunk, on_tool=print_tool
+        )
     except KeyboardInterrupt:
         print(dim("\n[resposta interrompida — turno descartado]"))
         return None, None
@@ -76,11 +91,16 @@ def respond(
         partial_note = "resposta parcial descartada — " if printed_any_chunk else ""
         print(dim(f"\n[erro na API: {partial_note}{error.message}]"))
         return None, None
+    if reply_text is None:
+        print(dim("\n[limite de rodadas de ferramenta atingido — turno descartado]"))
+        return None, None
     print()
-    return reply, usage
+    return reply_text, combined_usage(usages)
 
 
-def run_repl(client: Groq, system_prompt: str, store: NoteStore) -> SessionStats:
+def run_repl(
+    client: Groq, system_prompt: str, store: NoteStore, toolbox: Toolbox
+) -> SessionStats:
     history: list[Message] = []
     stats = SessionStats()
     while True:
@@ -110,7 +130,9 @@ def run_repl(client: Groq, system_prompt: str, store: NoteStore) -> SessionStats
             continue
         history.append({"role": "user", "content": user_input})
         note_matches = store.search(user_input)
-        reply, usage = respond(client, system_prompt, history, note_matches)
+        reply, usage = respond(
+            client, system_prompt, history, note_matches, toolbox
+        )
         if reply is None:
             # failed or interrupted turn: drop the user message so history
             # matches what the model will actually see next turn
@@ -131,6 +153,6 @@ def main() -> None:
         profile = offer_onboarding()
     print(dim("carregando índice de Notas (modelo de embeddings)..."))
     store = NoteStore(embedder=create_embedder())
-    stats = run_repl(client, build_system_prompt(profile), store)
+    stats = run_repl(client, build_system_prompt(profile), store, Toolbox())
     if stats.replies:
         print(dim(f"\nsessão: {format_session_stats(MODEL, stats)}"))

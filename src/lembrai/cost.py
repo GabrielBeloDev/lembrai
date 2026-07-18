@@ -43,6 +43,19 @@ class SessionStats:
         self.completion_tokens += usage.completion_tokens
 
 
+def combined_usage(usages: list[Usage]) -> Usage | None:
+    if not usages:
+        return None
+    total_time = None
+    if any(usage.total_time is not None for usage in usages):
+        total_time = sum(usage.total_time or 0.0 for usage in usages)
+    return Usage(
+        prompt_tokens=sum(usage.prompt_tokens for usage in usages),
+        completion_tokens=sum(usage.completion_tokens for usage in usages),
+        total_time=total_time,
+    )
+
+
 def token_breakdown(usage: Usage) -> str:
     return (
         f"{usage.total_tokens} tokens"

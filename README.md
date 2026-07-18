@@ -6,7 +6,7 @@ This is a learning-in-public project: building from LLM basics up to RAG, agents
 
 **Privacy by architecture**: your real data never leaves your machine (`data/`, git-ignored). The repo ships only the product and a fictional demo corpus.
 
-**Status**: phase 2 — Memória (Perfil + Notas with local RAG).
+**Status**: phase 3 — Ação (agent with local tools).
 
 ## Getting started
 
@@ -25,6 +25,11 @@ Inside the chat: `/nota <text>` saves a note (stored in `data/notes/`, embedded
 locally into ChromaDB at `data/chroma/`), and every message you send retrieves your
 most relevant notes so the assistant can use them. `/stats` shows session token usage
 and cost, `/limpar` clears the history, `/sair` exits.
+
+The assistant can also act on your behalf via function calling: it creates and
+lists events on a local calendar (`data/calendar.json`) and writes emails to a
+local outbox (`data/outbox/`) — real delivery and Google integration come in a
+later phase. Every tool execution is shown in the terminal as it happens.
 
 All personal data lives under `data/`, which never leaves your machine.
 
