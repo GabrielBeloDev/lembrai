@@ -63,3 +63,5 @@ Vocabulário canônico em [CONTEXT.md](./CONTEXT.md).
 
 - Provedor pago de ponta (Claude/OpenAI) — decidir na fase 3-4, se o free tier travar
 - Como agenda/e-mail entram (Google APIs vs alternativa mais simples) — decidir na fase 3
+- Dívida: paths de `data/` são relativos ao cwd (rodar o CLI fora da raiz cria um `data/` novo) — ancorar em diretório fixo quando o uso sair da raiz do repo
+- Fase 3 (segurança): com Ferramentas ativas, mover o contexto de Notas de `role=system` para dado delimitado em `role=user`; considerar pinar `revision` do modelo de embeddings

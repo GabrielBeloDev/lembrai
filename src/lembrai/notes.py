@@ -5,7 +5,7 @@ from pathlib import Path
 import chromadb
 
 from lembrai.chunking import chunk_text
-from lembrai.embeddings import PASSAGE_PREFIX, QUERY_PREFIX, Embedder
+from lembrai.embeddings import Embedder
 
 NOTES_DIR = Path("data/notes")
 CHROMA_DIR = Path("data/chroma")
@@ -30,31 +30,35 @@ def as_context(matches: list[NoteMatch]) -> str:
 class NoteStore:
     def __init__(
         self,
-        embed: Embedder,
+        embedder: Embedder,
         notes_dir: Path = NOTES_DIR,
         chroma_dir: Path = CHROMA_DIR,
     ):
-        self._embed = embed
+        self._embedder = embedder
         self._notes_dir = notes_dir
         client = chromadb.PersistentClient(path=str(chroma_dir))
-        self._collection = client.get_or_create_collection(COLLECTION_NAME)
+        self._collection = client.get_or_create_collection(
+            COLLECTION_NAME, metadata={"hnsw:space": "cosine"}
+        )
 
     def add(self, text: str) -> Path:
         saved_at = datetime.now()
         note_id = saved_at.strftime("%Y%m%d-%H%M%S-%f")
-        self._notes_dir.mkdir(parents=True, exist_ok=True)
-        path = self._notes_dir / f"{note_id}.md"
-        path.write_text(text + "\n", encoding="utf-8")
         chunks = chunk_text(text)
         self._collection.add(
             ids=[f"{note_id}-{position}" for position in range(len(chunks))],
             documents=chunks,
-            embeddings=self._embed([PASSAGE_PREFIX + chunk for chunk in chunks]),
+            embeddings=self._embedder.embed_passages(chunks),
             metadatas=[
                 {"saved_at": saved_at.isoformat(timespec="seconds")}
                 for _ in chunks
             ],
         )
+        # the markdown file is written only after indexing succeeds, so a
+        # failure never leaves an orphan note that looks saved but is unsearchable
+        self._notes_dir.mkdir(parents=True, exist_ok=True)
+        path = self._notes_dir / f"{note_id}.md"
+        path.write_text(text + "\n", encoding="utf-8")
         return path
 
     def search(self, query: str, top_k: int = TOP_K) -> list[NoteMatch]:
@@ -62,7 +66,7 @@ class NoteStore:
         if stored_chunks == 0:
             return []
         result = self._collection.query(
-            query_embeddings=self._embed([QUERY_PREFIX + query]),
+            query_embeddings=self._embedder.embed_queries([query]),
             n_results=min(top_k, stored_chunks),
             include=["documents", "metadatas"],
         )

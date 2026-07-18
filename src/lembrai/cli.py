@@ -39,9 +39,10 @@ def offer_onboarding() -> str | None:
             return None
         content = ask_profile()
     except (EOFError, KeyboardInterrupt):
-        print()
+        print(dim("\nonboarding cancelado — nenhum Perfil salvo"))
         return None
     if content is None:
+        print(dim("nenhuma resposta preenchida — Perfil não criado"))
         return None
     save_profile(content)
     print(dim(f"Perfil salvo em {PROFILE_PATH} — edite o arquivo quando quiser."))
@@ -98,7 +99,8 @@ def run_repl(client: Groq, system_prompt: str, store: NoteStore) -> SessionStats
         if user_input == "/stats":
             print(dim(format_session_stats(MODEL, stats)))
             continue
-        if user_input == "/nota" or user_input.startswith("/nota "):
+        is_note_command = user_input == "/nota" or user_input.startswith("/nota ")
+        if is_note_command:
             note_text = user_input.removeprefix("/nota").strip()
             if not note_text:
                 print(dim(NOTE_USAGE_HINT))
@@ -127,8 +129,8 @@ def main() -> None:
     print(BANNER)
     if profile is None:
         profile = offer_onboarding()
-    print(dim("carregando memória local (modelo de embeddings)..."))
-    store = NoteStore(embed=create_embedder())
+    print(dim("carregando índice de Notas (modelo de embeddings)..."))
+    store = NoteStore(embedder=create_embedder())
     stats = run_repl(client, build_system_prompt(profile), store)
     if stats.replies:
         print(dim(f"\nsessão: {format_session_stats(MODEL, stats)}"))
