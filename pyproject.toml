@@ -6,6 +6,8 @@ requires-python = ">=3.12"
 dependencies = [
     "groq>=0.13",
     "python-dotenv>=1.0",
+    "chromadb>=1.5",
+    "sentence-transformers>=5.0",
 ]
 
 [project.optional-dependencies]

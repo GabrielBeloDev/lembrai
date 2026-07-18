@@ -6,14 +6,17 @@ from groq import APIError, Groq
 
 from lembrai.chat import MODEL, stream_reply
 from lembrai.cost import SessionStats, Usage, format_session_stats, format_usage_line
+from lembrai.embeddings import create_embedder
 from lembrai.history import Message, trimmed
+from lembrai.notes import NoteMatch, NoteStore, as_context
+from lembrai.onboarding import ask_profile, save_profile
 from lembrai.profile import PROFILE_PATH, build_system_prompt, load_profile
 
-BANNER = "lembrai — seu assistente pessoal. Comandos: /stats, /limpar, /sair"
-NO_PROFILE_HINT = (
-    f"Dica: crie {PROFILE_PATH} com informações sobre você "
-    "para respostas personalizadas."
+BANNER = (
+    "lembrai — seu assistente pessoal. "
+    "Comandos: /nota <texto>, /stats, /limpar, /sair"
 )
+NOTE_USAGE_HINT = "uso: /nota <texto da nota>"
 
 
 def dim(text: str) -> str:
@@ -28,12 +31,33 @@ def create_client() -> Groq:
     return Groq(api_key=api_key)
 
 
+def offer_onboarding() -> str | None:
+    question = "Você ainda não tem um Perfil. Quer fazer o onboarding agora? (s/n) "
+    try:
+        wants_onboarding = input(question).strip().lower() in {"s", "sim"}
+        if not wants_onboarding:
+            return None
+        content = ask_profile()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return None
+    if content is None:
+        return None
+    save_profile(content)
+    print(dim(f"Perfil salvo em {PROFILE_PATH} — edite o arquivo quando quiser."))
+    return content
+
+
 def respond(
     client: Groq,
     system_prompt: str,
     history: list[Message],
+    note_matches: list[NoteMatch],
 ) -> tuple[str | None, Usage | None]:
-    messages = [{"role": "system", "content": system_prompt}, *trimmed(history)]
+    messages: list[Message] = [{"role": "system", "content": system_prompt}]
+    if note_matches:
+        messages.append({"role": "system", "content": as_context(note_matches)})
+    messages.extend(trimmed(history))
     print("\nlembrai › ", end="", flush=True)
     printed_any_chunk = False
 
@@ -55,7 +79,7 @@ def respond(
     return reply, usage
 
 
-def run_repl(client: Groq, system_prompt: str) -> SessionStats:
+def run_repl(client: Groq, system_prompt: str, store: NoteStore) -> SessionStats:
     history: list[Message] = []
     stats = SessionStats()
     while True:
@@ -74,8 +98,17 @@ def run_repl(client: Groq, system_prompt: str) -> SessionStats:
         if user_input == "/stats":
             print(dim(format_session_stats(MODEL, stats)))
             continue
+        if user_input == "/nota" or user_input.startswith("/nota "):
+            note_text = user_input.removeprefix("/nota").strip()
+            if not note_text:
+                print(dim(NOTE_USAGE_HINT))
+                continue
+            saved_path = store.add(note_text)
+            print(dim(f"nota salva em {saved_path}"))
+            continue
         history.append({"role": "user", "content": user_input})
-        reply, usage = respond(client, system_prompt, history)
+        note_matches = store.search(user_input)
+        reply, usage = respond(client, system_prompt, history, note_matches)
         if reply is None:
             # failed or interrupted turn: drop the user message so history
             # matches what the model will actually see next turn
@@ -93,7 +126,9 @@ def main() -> None:
     profile = load_profile()
     print(BANNER)
     if profile is None:
-        print(dim(NO_PROFILE_HINT))
-    stats = run_repl(client, build_system_prompt(profile))
+        profile = offer_onboarding()
+    print(dim("carregando memória local (modelo de embeddings)..."))
+    store = NoteStore(embed=create_embedder())
+    stats = run_repl(client, build_system_prompt(profile), store)
     if stats.replies:
         print(dim(f"\nsessão: {format_session_stats(MODEL, stats)}"))
