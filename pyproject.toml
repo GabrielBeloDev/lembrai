@@ -14,10 +14,15 @@ dependencies = [
 dev = [
     "pytest>=8",
 ]
+api = [
+    "fastapi",
+    "uvicorn[standard]",
+]
 
 [project.scripts]
 lembrai = "lembrai.cli:main"
 lembrai-check = "lembrai.check:main"
+lembrai-api = "lembrai.api:main"
 
 [build-system]
 requires = ["setuptools>=68"]

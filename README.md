@@ -6,7 +6,7 @@ This is a learning-in-public project: building from LLM basics up to RAG, agents
 
 **Privacy by architecture**: your real data never leaves your machine (`data/`, git-ignored). The repo ships only the product and a fictional demo corpus.
 
-**Status**: phase 4a — Proatividade (autonomous reminders).
+**Status**: phase 4b.1 — chat over HTTP (thin FastAPI service).
 
 ## Getting started
 
@@ -45,5 +45,23 @@ even when the chat is closed — e.g. every 15 minutes via cron:
 ```
 
 All personal data lives under `data/`, which never leaves your machine.
+
+## API
+
+The same assistant is also exposed over HTTP by a thin, stateless FastAPI service —
+the streaming groundwork for the web front (phase 4b). Install the API extras and run it:
+
+```bash
+.venv/bin/pip install -e ".[dev,api]"
+.venv/bin/lembrai-api   # serves on http://127.0.0.1:8000
+```
+
+`POST /chat` takes `{"messages": [{"role", "content"}, ...]}` and streams the reply as
+Server-Sent Events: `token` (text delta), `tool` / `tool_result` / `tool_error` (a tool
+call, its result, or malformed arguments — non-terminal), `done` (final text plus token
+usage and cost), and `error` (terminal). The server keeps no
+session: the client owns the history and sends it on every request. `GET /health` returns
+`{"status": "ready"}` once the embedding model is loaded. The `GROQ_API_KEY` stays on the
+server (in its `.env`) and is never exposed to the browser.
 
 Run the tests with `.venv/bin/pytest`.

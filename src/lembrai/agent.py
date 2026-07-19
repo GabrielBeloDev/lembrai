@@ -41,6 +41,7 @@ def run_agent_turn(
     on_chunk: Callable[[str], None],
     on_tool: Callable[[str, dict[str, object]], None],
     on_malformed_tool: Callable[[str], None],
+    on_tool_result: Callable[[str, str], None] = lambda _name, _result: None,
 ) -> tuple[str | None, list[Usage]]:
     messages = list(base_messages)
     usages: list[Usage] = []
@@ -59,6 +60,7 @@ def run_agent_turn(
             else:
                 on_tool(call.name, arguments)
                 result = toolbox.execute(call.name, arguments)
+                on_tool_result(call.name, result)
             messages.append(
                 {
                     "role": "tool",

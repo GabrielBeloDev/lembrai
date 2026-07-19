@@ -57,6 +57,12 @@ cron). Aprende: agente que age sem pedido no momento, agendamento, quando interr
 Next.js consumindo. Decisão de arquitetura (como o front fala com a camada de IA) vira ADR.
 Aprende: integração IA ↔ produto.
 
+- **4b.1 — Chat por HTTP (feito)**: serviço FastAPI fino e stateless com `POST /chat`
+  (streaming SSE) e `GET /health`. O cliente é dono do histórico; a chave fica só no
+  servidor. Ponte síncrona (`queue.Queue` + thread daemon) para o loop de agente.
+  Ver [ADR 0002](./docs/adr/0002-camada-de-ia-como-servico-fastapi-fino.md).
+- **4b.2 — Front Next.js**: consumir o stream e montar a UI de chat.
+
 ### Fase 5 — Qualidade
 
 **Entrega**: Corpus de Demo com perguntas de resposta conhecida; suíte de evals medindo taxa de acerto; Langfuse com traces, custo e latência.
