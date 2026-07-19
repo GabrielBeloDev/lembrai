@@ -157,4 +157,12 @@ Docker Compose). Traces go only to whichever Langfuse you configure — nothing 
 machine unless you set the keys yourself. The CLI flushes pending traces on exit; the
 long-lived API server lets Langfuse batch them in the background.
 
+## Fine-tuning experiment (optional)
+
+A side lab in [`finetune/`](./finetune/) fine-tunes a small 4-bit model (LoRA, via MLX)
+to the lembrai answer style, running fully local on Apple Silicon. It is a learning
+experiment — not wired into the product (which stays on Groq), and `mlx-lm` is not a
+lembrai dependency. See [`finetune/README.md`](./finetune/README.md) for the concepts,
+how to run it, and the real results (loss curve and before/after generations).
+
 Run the tests with `.venv/bin/pytest`.
