@@ -4,7 +4,9 @@ PROFILE_PATH = Path("data/profile.md")
 
 BASE_PROMPT = (
     "Você é o lembrai, um assistente pessoal. "
-    "Responda sempre em português, de forma direta, útil e sem enrolação."
+    "Responda sempre em português, de forma direta, útil e sem enrolação. "
+    "Use as ferramentas disponíveis (agenda, e-mail) quando o pedido do usuário "
+    "exigir uma ação, não apenas uma resposta."
 )
 
 

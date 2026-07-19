@@ -24,6 +24,7 @@ Vocabulário canônico em [CONTEXT.md](./CONTEXT.md).
 - **Camada de IA**: Python + FastAPI (fases 1-3 podem viver como CLI/API pura)
 - **Front**: Next.js/TypeScript — entra na fase 4
 - **LLM**: Groq free tier agora; modelo de ponta pago (~R$ 50/mês) quando uma fase justificar; modelos locais (Ollama/MLX, MacBook M5 24GB) apenas como laboratório na fase 6
+- **Memória semântica**: embeddings locais (sentence-transformers, `intfloat/multilingual-e5-small`) + ChromaDB persistente em `data/chroma/` (decidido na fase 2)
 - **Observabilidade**: Langfuse (fase 5)
 
 ## Fases
@@ -61,5 +62,6 @@ Vocabulário canônico em [CONTEXT.md](./CONTEXT.md).
 ## Decisões em aberto
 
 - Provedor pago de ponta (Claude/OpenAI) — decidir na fase 3-4, se o free tier travar
-- Banco vetorial específico — decidir na fase 2
 - Como agenda/e-mail entram (Google APIs vs alternativa mais simples) — decidir na fase 3
+- Dívida: paths de `data/` são relativos ao cwd (rodar o CLI fora da raiz cria um `data/` novo) — ancorar em diretório fixo quando o uso sair da raiz do repo
+- Fase 3 (segurança): com Ferramentas ativas, mover o contexto de Notas de `role=system` para dado delimitado em `role=user`; considerar pinar `revision` do modelo de embeddings

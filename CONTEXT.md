@@ -32,6 +32,18 @@ _Avoid_: notificação, alerta
 Uma ação externa que o Assistente pode executar em nome do Usuário — criar evento na agenda, enviar e-mail.
 _Avoid_: integração, plugin, action
 
+**Agenda**:
+O calendário local do Usuário, onde o Assistente cria e consulta Eventos.
+_Avoid_: calendário
+
+**Evento**:
+Um compromisso na Agenda, com título, data e hora opcional.
+_Avoid_: compromisso, agendamento
+
+**Caixa de Saída**:
+Onde o Assistente deposita e-mails escritos em nome do Usuário enquanto o envio real não está configurado.
+_Avoid_: outbox, rascunhos
+
 **Corpus de Demo**:
 Conjunto fictício de Perfil e Notas de uma pessoa inventada, versionado no repositório. Serve para demonstração pública e para os evals — nunca contém dados reais.
 _Avoid_: dados de teste, seed, mock

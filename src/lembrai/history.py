@@ -1,4 +1,4 @@
-Message = dict[str, str]
+Message = dict[str, object]
 
 MAX_MESSAGES = 40
 
