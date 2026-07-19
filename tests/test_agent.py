@@ -24,6 +24,7 @@ def make_toolbox(tmp_path: Path) -> Toolbox:
     return Toolbox(
         calendar_path=tmp_path / "calendar.json",
         outbox_dir=tmp_path / "outbox",
+        reminders_path=tmp_path / "reminders.json",
     )
 
 

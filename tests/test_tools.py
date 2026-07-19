@@ -1,6 +1,8 @@
 import json
+from datetime import datetime
 from pathlib import Path
 
+from lembrai.reminders import ReminderStore
 from lembrai.tools import Toolbox
 
 
@@ -8,6 +10,7 @@ def make_toolbox(tmp_path: Path) -> Toolbox:
     return Toolbox(
         calendar_path=tmp_path / "calendar.json",
         outbox_dir=tmp_path / "outbox",
+        reminders_path=tmp_path / "reminders.json",
     )
 
 
@@ -60,3 +63,22 @@ def test_execute_rejects_unknown_tool(tmp_path: Path):
 def test_execute_reports_invalid_arguments_back(tmp_path: Path):
     result = make_toolbox(tmp_path).execute("create_event", {"nome": "x"})
     assert "Argumentos inválidos" in result
+
+
+def test_create_reminder_persists_and_is_deliverable(tmp_path: Path):
+    toolbox = make_toolbox(tmp_path)
+    result = toolbox.create_reminder("levar exames", "2026-07-25", "14:00")
+    assert "Lembrete criado" in result
+    due = ReminderStore(tmp_path / "reminders.json").deliver_due(datetime(2026, 7, 26))
+    assert due[0].message == "levar exames"
+
+
+def test_create_reminder_defaults_time_to_morning(tmp_path: Path):
+    result = make_toolbox(tmp_path).create_reminder("acordar", "2026-07-25")
+    assert "09:00" in result
+
+
+def test_create_reminder_rejects_a_non_iso_date(tmp_path: Path):
+    result = make_toolbox(tmp_path).create_reminder("x", "amanhã")
+    assert "formato inválido" in result
+    assert not (tmp_path / "reminders.json").exists()

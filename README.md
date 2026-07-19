@@ -6,7 +6,7 @@ This is a learning-in-public project: building from LLM basics up to RAG, agents
 
 **Privacy by architecture**: your real data never leaves your machine (`data/`, git-ignored). The repo ships only the product and a fictional demo corpus.
 
-**Status**: phase 3 — Ação (agent with local tools).
+**Status**: phase 4a — Proatividade (autonomous reminders).
 
 ## Getting started
 
@@ -27,9 +27,22 @@ most relevant notes so the assistant can use them. `/stats` shows session token 
 and cost, `/limpar` clears the history, `/sair` exits.
 
 The assistant can also act on your behalf via function calling: it creates and
-lists events on a local calendar (`data/calendar.json`) and writes emails to a
-local outbox (`data/outbox/`) — real delivery and Google integration come in a
-later phase. Every tool execution is shown in the terminal as it happens.
+lists events on a local calendar (`data/calendar.json`), writes emails to a
+local outbox (`data/outbox/`), and schedules reminders (`data/reminders.json`) —
+real delivery and Google integration come in a later phase. Every tool execution
+is shown in the terminal as it happens.
+
+## Reminders
+
+Ask the assistant to remind you of something ("me lembra amanhã às 10h de ligar
+pro dentista") and it schedules a reminder. Due reminders are delivered when you
+start `lembrai`, and by the `lembrai-check` command, which prints anything due and
+marks it delivered so it never fires twice. Run it on a schedule to be reminded
+even when the chat is closed — e.g. every 15 minutes via cron:
+
+```cron
+*/15 * * * * cd /path/to/lembrai && .venv/bin/lembrai-check
+```
 
 All personal data lives under `data/`, which never leaves your machine.
 
