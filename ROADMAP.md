@@ -61,7 +61,10 @@ Aprende: integração IA ↔ produto.
   (streaming SSE) e `GET /health`. O cliente é dono do histórico; a chave fica só no
   servidor. Ponte síncrona (`queue.Queue` + thread daemon) para o loop de agente.
   Ver [ADR 0002](./docs/adr/0002-camada-de-ia-como-servico-fastapi-fino.md).
-- **4b.2 — Front Next.js**: consumir o stream e montar a UI de chat.
+- **4b.2 — Front Next.js (feito)**: front mínimo em Next.js (App Router, TypeScript)
+  que consome o stream SSE e monta a UI de chat. Proxy same-origin via `rewrite` do Next
+  (`/api/ai/*` → serviço FastAPI) mantém a chave só no servidor; o cliente é dono do
+  histórico e renderiza token a token, com atividade de Ferramentas ao vivo.
 
 ### Fase 5 — Qualidade
 
