@@ -6,7 +6,7 @@ This is a learning-in-public project: building from LLM basics up to RAG, agents
 
 **Privacy by architecture**: your real data never leaves your machine (`data/`, git-ignored). The repo ships only the product and a fictional demo corpus.
 
-**Status**: phase 4b.3a — REST endpoints for profile/onboarding, notes and reminders.
+**Status**: phase 4b.3b — web UI for onboarding, notes and reminders (phase 4 complete).
 
 ## Getting started
 
@@ -77,11 +77,23 @@ Alongside chat, the service exposes plain REST endpoints for the rest of the pro
 
 ## Web
 
-A minimal Next.js (App Router, TypeScript) chat front-end (`web/`) that streams from the
-API. The browser calls `/api/ai/chat`; a same-origin Next `rewrite` proxies it to the
-FastAPI service, so the backend origin never leaks and the `GROQ_API_KEY` stays on the
-server. The client owns the conversation history, renders the reply token by token, and
-shows tool activity live. Run the full stack locally with two terminals:
+A minimal Next.js (App Router, TypeScript) front-end (`web/`) for the whole product,
+organized as tabs — **Chat**, **Notas**, **Lembretes** and **Perfil**. Every request goes
+through a same-origin Next `rewrite` (`/api/ai/*` → FastAPI), so the backend origin never
+leaks and the `GROQ_API_KEY` stays on the server.
+
+- **Chat** streams from `/api/ai/chat`: the client owns the conversation history, renders the
+  reply token by token, and shows tool activity live.
+- **Notas** lists your notes and adds new ones (optimistic insert, then reconciled against the
+  server; empty notes are rejected).
+- **Lembretes** lists reminders (message, due date, delivered/pending) and has a "Verificar
+  vencidos" button that delivers the ones due now.
+- **Perfil** shows your profile, or the onboarding form when you don't have one yet — answer
+  the questions to build it, and reopen the form anytime to edit.
+
+Each tab fetches its data on demand the first time it is opened (there is no data-fetching on
+mount); a typed API client (`web/lib/api.ts`) parses every response with type guards. Run the
+full stack locally with two terminals:
 
 ```bash
 # terminal 1 — the API (holds the GROQ_API_KEY)

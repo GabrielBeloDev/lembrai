@@ -132,11 +132,6 @@ export function Chat() {
 
   return (
     <div className={styles.chat}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>lembrai</h1>
-        <p className={styles.subtitle}>Converse com o seu Assistente pessoal</p>
-      </header>
-
       <div className={styles.messages} role="log" tabIndex={0} aria-label="Conversa">
         {showEmptyState && (
           <p className={styles.empty}>Comece a conversa com o seu Assistente.</p>

@@ -44,7 +44,7 @@ Vocabulário canônico em [CONTEXT.md](./CONTEXT.md).
 **Entrega**: o Assistente executa Ferramentas — cria evento na agenda, envia e-mail.
 **Aprende**: function calling/tool use, loop de agente, orquestração, tratamento de falha de Ferramenta.
 
-### Fase 4 — Proatividade + produto
+### Fase 4 — Proatividade + produto (feito)
 
 Dividida em dois incrementos para manter cada PR revisável.
 
@@ -53,7 +53,7 @@ usa por linguagem natural; Lembretes persistidos em `data/reminders.json`; entre
 vencidos no início da sessão do CLI e via `lembrai-check` (idempotente, para rodar em
 cron). Aprende: agente que age sem pedido no momento, agendamento, quando interromper.
 
-**4b — API + front Next.js**: expor o Assistente como API (FastAPI) e um front em
+**4b — API + front Next.js (feito)**: expor o Assistente como API (FastAPI) e um front em
 Next.js consumindo. Decisão de arquitetura (como o front fala com a camada de IA) vira ADR.
 Aprende: integração IA ↔ produto.
 
@@ -70,9 +70,12 @@ Aprende: integração IA ↔ produto.
   `GET /onboarding/questions`), Notas (`POST`/`GET /notes`) e Lembretes (`GET /reminders`,
   `POST /reminders/deliver`, idempotente). Continua stateless e single-user local, sobre o
   mesmo `data/`; sem auth (o front usa rewrites do Next).
-- **4b.3b — UI de onboarding/notas/lembretes (pendente)**: telas no front Next.js que
-  consomem esses endpoints — formulário de onboarding, lista/adição de Notas e visão de
-  Lembretes.
+- **4b.3b — UI de onboarding/notas/lembretes (feito)**: o front Next.js ganha navegação por
+  abas (Chat | Notas | Lembretes | Perfil) sobre esses endpoints — formulário de onboarding
+  (com edição do Perfil), lista/adição de Notas (insert otimista + reconciliação) e visão de
+  Lembretes (mensagem, vencimento, entregue/pendente, botão "Verificar vencidos"). Cliente de
+  API tipado (`web/lib/api.ts`) com type guards; fetch on-demand ao abrir a aba, sem
+  `useEffect` para dados. **Com isso a fase 4 está completa.**
 
 ### Fase 5 — Qualidade
 
