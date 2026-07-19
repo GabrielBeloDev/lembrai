@@ -80,7 +80,7 @@ export function NotesPanel({ state, onAdd, onRetry }: NotesPanelProps) {
     [text, onAdd],
   );
 
-  const canSubmit = !adding && text.trim().length > 0;
+  const canSubmit = !adding && text.trim().length > 0 && state.status === "ready";
 
   return (
     <section className={styles.section} aria-label="Notas">
@@ -96,7 +96,7 @@ export function NotesPanel({ state, onAdd, onRetry }: NotesPanelProps) {
             onChange={(event) => setText(event.target.value)}
             placeholder="Escreva uma nota…"
             autoComplete="off"
-            disabled={adding}
+            disabled={adding || state.status !== "ready"}
           />
           <button
             type="submit"

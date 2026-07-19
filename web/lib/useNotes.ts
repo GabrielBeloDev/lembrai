@@ -16,7 +16,7 @@ export function useNotes() {
       setState((previous) =>
         previous.status === "ready"
           ? { status: "ready", data: [optimistic, ...previous.data] }
-          : { status: "ready", data: [optimistic] },
+          : previous,
       );
       try {
         await postNote(text);

@@ -17,11 +17,18 @@ export function useReminders() {
     setDelivering(true);
     setDeliverError(null);
     try {
-      const messages = await deliverReminders();
-      setDelivered(messages);
-      setState({ status: "ready", data: await getReminders() });
-    } catch {
-      setDeliverError(DELIVER_ERROR);
+      try {
+        const messages = await deliverReminders();
+        setDelivered(messages);
+      } catch {
+        setDeliverError(DELIVER_ERROR);
+        return;
+      }
+      try {
+        setState({ status: "ready", data: await getReminders() });
+      } catch {
+        // delivery succeeded; a failed reconcile must not surface as an error
+      }
     } finally {
       setDelivering(false);
     }
