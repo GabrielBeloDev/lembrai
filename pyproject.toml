@@ -23,6 +23,7 @@ api = [
 lembrai = "lembrai.cli:main"
 lembrai-check = "lembrai.check:main"
 lembrai-api = "lembrai.api:main"
+lembrai-eval = "lembrai.evals:main"
 
 [build-system]
 requires = ["setuptools>=68"]

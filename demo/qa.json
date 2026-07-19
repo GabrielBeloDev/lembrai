@@ -1,0 +1,116 @@
+[
+  {
+    "question": "Quando é a minha consulta no dentista?",
+    "expected": "25 de julho às 14h",
+    "kind": "fact",
+    "source": "consulta-dentista"
+  },
+  {
+    "question": "Que horas começa a reunião de kickoff com o Banco Aurora?",
+    "expected": "22 de julho às 10h",
+    "kind": "fact",
+    "source": "reuniao-cliente"
+  },
+  {
+    "question": "Qual é o prazo final para entregar o redesign do app?",
+    "expected": "8 de agosto",
+    "kind": "fact",
+    "source": "prazo-projeto"
+  },
+  {
+    "question": "O que eu decidi em relação à academia?",
+    "expected": "cancelar a academia",
+    "kind": "fact",
+    "source": "decisao-academia"
+  },
+  {
+    "question": "O que comprei de presente para a minha mãe?",
+    "expected": "lenço de seda",
+    "kind": "fact",
+    "source": "presente-mae"
+  },
+  {
+    "question": "Quando é o aniversário da minha mãe?",
+    "expected": "12 de setembro",
+    "kind": "fact",
+    "source": "presente-mae"
+  },
+  {
+    "question": "Onde eu costumo correr de manhã?",
+    "expected": "Parque da Redenção",
+    "kind": "fact",
+    "source": "lugar-corrida"
+  },
+  {
+    "question": "Que vitamina o médico me receitou e em que dose?",
+    "expected": "vitamina D 2000 UI",
+    "kind": "fact",
+    "source": "vitamina-d"
+  },
+  {
+    "question": "Qual livro eu estou lendo no momento?",
+    "expected": "Torto Arado",
+    "kind": "fact",
+    "source": "livro-atual"
+  },
+  {
+    "question": "Qual é a senha do wi-fi lá de casa?",
+    "expected": "girassol2026",
+    "kind": "fact",
+    "source": "senha-wifi"
+  },
+  {
+    "question": "Qual é o meu restaurante japonês preferido?",
+    "expected": "Koji",
+    "kind": "fact",
+    "source": "restaurante-favorito"
+  },
+  {
+    "question": "Quando eu viajo para Lisboa?",
+    "expected": "3 de outubro",
+    "kind": "fact",
+    "source": "viagem-lisboa"
+  },
+  {
+    "question": "Que comida eu não gosto?",
+    "expected": "coentro",
+    "kind": "profile",
+    "source": "profile:Preferências"
+  },
+  {
+    "question": "Em que cidade eu moro?",
+    "expected": "Porto Alegre",
+    "kind": "profile",
+    "source": "profile:Sobre"
+  },
+  {
+    "question": "Com o que eu trabalho?",
+    "expected": "designer de produto",
+    "kind": "profile",
+    "source": "profile:Sobre"
+  },
+  {
+    "question": "Qual é uma das minhas metas para este ano?",
+    "expected": "meia maratona",
+    "kind": "profile",
+    "source": "profile:Objetivos"
+  },
+  {
+    "question": "Qual é o número do meu passaporte?",
+    "expected": "não tenho essa informação",
+    "kind": "refusal",
+    "source": null
+  },
+  {
+    "question": "Que horas sai o meu voo de volta de Lisboa?",
+    "expected": "não sei",
+    "kind": "refusal",
+    "source": null
+  },
+  {
+    "question": "Qual é o nome do meu chefe na Nuvem Pay?",
+    "expected": "não tenho essa informação",
+    "kind": "refusal",
+    "source": null
+  }
+]
