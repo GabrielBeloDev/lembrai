@@ -77,6 +77,10 @@ and scores the reply:
 - **refusal** questions (answers the corpus does not contain): the reply passes only if the
   assistant admits it doesn't know instead of hallucinating.
 
+Honest caveat: for fact / profile, a substring hit is accepted without consulting the judge
+(a non-discriminating fast path), so the accuracy number for those kinds is not fully
+judge-verified; refusals are always judged.
+
 Run it (it indexes the demo notes into a throwaway directory, so it never touches `data/`):
 
 ```bash

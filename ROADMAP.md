@@ -71,9 +71,11 @@ Dividida em dois incrementos.
 perguntas de resposta conhecida) e um harness de evals (`lembrai-eval`) que mede a taxa de
 acerto do Assistente sobre esse corpus — mesmo caminho de busca semântica (Notas) + Perfil
 do chat, scoring por substring com fallback de LLM-as-judge ancorado na referência, e
-detecção de recusa para perguntas sem resposta no corpus. Reporta acurácia geral e por tipo
-(fact/profile/refusal). Aprende: avaliação de LLMs, regressão de prompts, o que separa demo
-de produção.
+recusas julgadas pelo juiz (não só por marcador) para perguntas sem resposta no corpus.
+Reporta acurácia geral e por tipo (fact/profile/refusal). Ressalva honesta: em fact/profile,
+um acerto por substring é aceito sem consultar o juiz (fast-path não-discriminante), então a
+acurácia dessas categorias não é totalmente verificada por juiz; recusas são sempre julgadas.
+Aprende: avaliação de LLMs, regressão de prompts, o que separa demo de produção.
 
 **5b — Observabilidade (pendente)**: Langfuse com traces, custo e latência.
 **Aprende**: observabilidade, custo/latência — LLMOps.

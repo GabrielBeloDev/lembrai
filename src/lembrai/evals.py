@@ -1,7 +1,6 @@
 import json
 import re
 import tempfile
-import unicodedata
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
@@ -21,24 +20,13 @@ DEMO_PROFILE_PATH = DEMO_DIR / "profile.md"
 DEMO_NOTES_DIR = DEMO_DIR / "notes"
 DEMO_QA_PATH = DEMO_DIR / "qa.json"
 
-JudgeFn = Callable[[str, str, str], float]
-
 VERDICT_SCORES: dict[str, float] = {
     "CORRECT": 1.0,
     "PARTIALLY_CORRECT": 0.5,
     "INCORRECT": 0.0,
 }
 
-_REFUSAL_MARKERS = (
-    "nao sei",
-    "nao tenho",
-    "nao encontrei",
-    "nao ha",
-    "sem informacao",
-    "nao consta",
-)
-
-JUDGE_SYSTEM_PROMPT = (
+JUDGE_REFERENCE_SYSTEM_PROMPT = (
     "Você é um avaliador rigoroso. Compare a RESPOSTA de um assistente com a "
     "REFERÊNCIA (a resposta correta conhecida) para a PERGUNTA. Julgue apenas a "
     "consistência factual com a REFERÊNCIA — ignore estilo, tom, ordem das "
@@ -54,6 +42,19 @@ JUDGE_SYSTEM_PROMPT = (
     '"verdict": "CORRECT|PARTIALLY_CORRECT|INCORRECT"}.'
 )
 
+JUDGE_REFUSAL_SYSTEM_PROMPT = (
+    "Você é um avaliador rigoroso de recusas. A PERGUNTA pede uma informação que "
+    "não existe nas notas nem no perfil do usuário; o assistente correto admite "
+    "que não sabe em vez de inventar.\n\n"
+    "Julgue a RESPOSTA:\n"
+    "- CORRECT: o assistente se recusa a responder ou diz que não tem a "
+    "informação, e NÃO afirma nenhum fato específico que responda à PERGUNTA.\n"
+    "- INCORRECT: o assistente dá uma resposta concreta à PERGUNTA, mesmo hesitante "
+    "ou com ressalvas (ex.: \"não tenho certeza, mas é X\").\n\n"
+    "Responda SOMENTE com um objeto JSON no formato "
+    '{"reasoning": "<breve justificativa>", "verdict": "CORRECT|INCORRECT"}.'
+)
+
 
 @dataclass(frozen=True)
 class Case:
@@ -61,6 +62,9 @@ class Case:
     expected: str
     kind: str
     source: str | None
+
+
+JudgeFn = Callable[[Case, str], float]
 
 
 @dataclass(frozen=True)
@@ -78,26 +82,12 @@ class EvalReport(TypedDict):
     by_kind: dict[str, float]
 
 
-def _strip_accents(text: str) -> str:
-    decomposed = unicodedata.normalize("NFD", text)
-    return "".join(char for char in decomposed if unicodedata.category(char) != "Mn")
-
-
 def _normalize_spacing(text: str) -> str:
     return " ".join(text.lower().split())
 
 
-def _normalize_loose(text: str) -> str:
-    return " ".join(_strip_accents(text).lower().split())
-
-
 def substring_score(answer: str, expected: str) -> float:
     return 1.0 if _normalize_spacing(expected) in _normalize_spacing(answer) else 0.0
-
-
-def is_refusal(answer: str) -> bool:
-    normalized = _normalize_loose(answer)
-    return any(marker in normalized for marker in _REFUSAL_MARKERS)
 
 
 def _extract_json_object(raw: str) -> dict[str, object] | None:
@@ -116,18 +106,18 @@ def parse_judge_verdict(raw: str) -> float:
     verdict = payload.get("verdict") if payload else None
     if not isinstance(verdict, str):
         return 0.0
-    # an unparseable or unknown verdict scores 0.0: a missing verdict counts as
-    # "not proven correct", never as a silent pass
+    # unknown but valid verdict string -> 0.0: fail-closed, never a silent pass
     return VERDICT_SCORES.get(verdict.strip().upper(), 0.0)
 
 
 def score_case(case: Case, answer: str, judge_fn: JudgeFn) -> float:
+    # refusals always go to the judge: a marker match alone would pass a hedged
+    # hallucination ("não tenho certeza, mas seu chefe é X") that states a fact
     if case.kind == "refusal":
-        return 1.0 if is_refusal(answer) else 0.0
-    exact = substring_score(answer, case.expected)
-    if exact == 1.0:
-        return exact
-    return judge_fn(case.question, answer, case.expected)
+        return judge_fn(case, answer)
+    if substring_score(answer, case.expected) == 1.0:
+        return 1.0
+    return judge_fn(case, answer)
 
 
 def answer_question(
@@ -144,19 +134,25 @@ def answer_question(
     return reply.text
 
 
-def judge(client: Groq, question: str, answer: str, expected: str) -> float:
+def _judge_prompt(case: Case, answer: str) -> tuple[str, str]:
+    if case.kind == "refusal":
+        return (
+            JUDGE_REFUSAL_SYSTEM_PROMPT,
+            f"PERGUNTA: {case.question}\nRESPOSTA: {answer}",
+        )
+    return (
+        JUDGE_REFERENCE_SYSTEM_PROMPT,
+        f"PERGUNTA: {case.question}\nREFERÊNCIA: {case.expected}\nRESPOSTA: {answer}",
+    )
+
+
+def judge(client: Groq, case: Case, answer: str) -> float:
+    system_prompt, user_content = _judge_prompt(case, answer)
     response = client.chat.completions.create(
         model=MODEL,
         messages=[
-            {"role": "system", "content": JUDGE_SYSTEM_PROMPT},
-            {
-                "role": "user",
-                "content": (
-                    f"PERGUNTA: {question}\n"
-                    f"REFERÊNCIA: {expected}\n"
-                    f"RESPOSTA: {answer}"
-                ),
-            },
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_content},
         ],
         temperature=0,
         response_format={"type": "json_object"},
@@ -183,8 +179,8 @@ def run_evals(
     profile_text: str,
     cases: list[Case],
 ) -> EvalReport:
-    def judge_fn(question: str, answer: str, expected: str) -> float:
-        return judge(client, question, answer, expected)
+    def judge_fn(case: Case, answer: str) -> float:
+        return judge(client, case, answer)
 
     results: list[CaseResult] = []
     for case in cases:
@@ -222,8 +218,7 @@ def load_demo() -> tuple[str, list[Case]]:
     return profile_text, cases
 
 
-def build_demo_note_store(embedder: Embedder) -> NoteStore:
-    workdir = Path(tempfile.mkdtemp(prefix="lembrai-eval-"))
+def build_demo_note_store(embedder: Embedder, workdir: Path) -> NoteStore:
     store = NoteStore(
         embedder=embedder,
         notes_dir=workdir / "notes",
@@ -272,6 +267,7 @@ def main() -> None:
     client = create_client()
     profile_text, cases = load_demo()
     print("carregando índice de Notas (modelo de embeddings)...")
-    note_store = build_demo_note_store(create_embedder())
-    report = run_evals(client, note_store, profile_text, cases)
+    with tempfile.TemporaryDirectory(prefix="lembrai-eval-") as workdir:
+        note_store = build_demo_note_store(create_embedder(), Path(workdir))
+        report = run_evals(client, note_store, profile_text, cases)
     print(format_report(report))
