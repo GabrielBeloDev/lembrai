@@ -6,7 +6,7 @@ This is a learning-in-public project: building from LLM basics up to RAG, agents
 
 **Privacy by architecture**: your real data never leaves your machine (`data/`, git-ignored). The repo ships only the product and a fictional demo corpus.
 
-**Status**: phase 4b.2 — minimal Next.js chat front streaming from the API.
+**Status**: phase 4b.3a — REST endpoints for profile/onboarding, notes and reminders.
 
 ## Getting started
 
@@ -63,6 +63,17 @@ usage and cost), and `error` (terminal). The server keeps no
 session: the client owns the history and sends it on every request. `GET /health` returns
 `{"status": "ready"}` once the embedding model is loaded. The `GROQ_API_KEY` stays on the
 server (in its `.env`) and is never exposed to the browser.
+
+Alongside chat, the service exposes plain REST endpoints for the rest of the product
+(profile, notes and reminders), all reading and writing the same local `data/`:
+
+- `GET /profile` → `{"content": string | null}`; `POST /profile` `{"answers": [...]}` builds
+  and persists the profile from the onboarding answers (blank answers are skipped).
+- `GET /onboarding/questions` → the onboarding form questions, in order.
+- `POST /notes` `{"text": ...}` saves a note and returns its `id`; `GET /notes` lists saved
+  notes, most recent first.
+- `GET /reminders` lists all reminders (by due date); `POST /reminders/deliver` delivers the
+  ones due now and returns their messages (idempotent).
 
 ## Web
 

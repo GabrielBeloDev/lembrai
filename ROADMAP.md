@@ -65,6 +65,14 @@ Aprende: integração IA ↔ produto.
   que consome o stream SSE e monta a UI de chat. Proxy same-origin via `rewrite` do Next
   (`/api/ai/*` → serviço FastAPI) mantém a chave só no servidor; o cliente é dono do
   histórico e renderiza token a token, com atividade de Ferramentas ao vivo.
+- **4b.3a — Endpoints REST (feito)**: o serviço FastAPI ganha endpoints REST para o resto
+  do produto além do chat — Perfil/Onboarding (`GET`/`POST /profile`,
+  `GET /onboarding/questions`), Notas (`POST`/`GET /notes`) e Lembretes (`GET /reminders`,
+  `POST /reminders/deliver`, idempotente). Continua stateless e single-user local, sobre o
+  mesmo `data/`; sem auth (o front usa rewrites do Next).
+- **4b.3b — UI de onboarding/notas/lembretes (pendente)**: telas no front Next.js que
+  consomem esses endpoints — formulário de onboarding, lista/adição de Notas e visão de
+  Lembretes.
 
 ### Fase 5 — Qualidade
 

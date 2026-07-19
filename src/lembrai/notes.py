@@ -19,6 +19,12 @@ class NoteMatch:
     saved_at: str
 
 
+@dataclass(frozen=True)
+class StoredNote:
+    id: str
+    text: str
+
+
 def as_context(matches: list[NoteMatch]) -> str:
     # note text is data: strip the closing delimiter so a note can never break
     # out of the <notas> block and be read as instruction
@@ -67,6 +73,20 @@ class NoteStore:
         path = self._notes_dir / f"{note_id}.md"
         path.write_text(text + "\n", encoding="utf-8")
         return path
+
+    def list_notes(self) -> list[StoredNote]:
+        if not self._notes_dir.exists():
+            return []
+        paths = sorted(
+            self._notes_dir.glob("*.md"), key=lambda path: path.stem, reverse=True
+        )
+        return [
+            StoredNote(
+                id=path.stem,
+                text=path.read_text(encoding="utf-8").removesuffix("\n"),
+            )
+            for path in paths
+        ]
 
     def search(self, query: str, top_k: int = TOP_K) -> list[NoteMatch]:
         stored_chunks = self._collection.count()
