@@ -6,7 +6,7 @@ This is a learning-in-public project: building from LLM basics up to RAG, agents
 
 **Privacy by architecture**: your real data never leaves your machine (`data/`, git-ignored). The repo ships only the product and a fictional demo corpus.
 
-**Status**: phase 5a — evals over the demo corpus.
+**Status**: phase 4b.2 — minimal Next.js chat front streaming from the API.
 
 ## Getting started
 
@@ -63,6 +63,25 @@ usage and cost), and `error` (terminal). The server keeps no
 session: the client owns the history and sends it on every request. `GET /health` returns
 `{"status": "ready"}` once the embedding model is loaded. The `GROQ_API_KEY` stays on the
 server (in its `.env`) and is never exposed to the browser.
+
+## Web
+
+A minimal Next.js (App Router, TypeScript) chat front-end (`web/`) that streams from the
+API. The browser calls `/api/ai/chat`; a same-origin Next `rewrite` proxies it to the
+FastAPI service, so the backend origin never leaks and the `GROQ_API_KEY` stays on the
+server. The client owns the conversation history, renders the reply token by token, and
+shows tool activity live. Run the full stack locally with two terminals:
+
+```bash
+# terminal 1 — the API (holds the GROQ_API_KEY)
+.venv/bin/pip install -e ".[dev,api]"
+.venv/bin/lembrai-api            # serves on http://127.0.0.1:8000
+
+# terminal 2 — the web front
+cd web
+npm install
+npm run dev                      # http://localhost:3000
+```
 
 ## Evals
 
