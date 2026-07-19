@@ -1,4 +1,5 @@
 import json
+import logging
 import queue
 import threading
 from collections.abc import AsyncIterator, Iterator
@@ -9,7 +10,7 @@ import uvicorn
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import StreamingResponse
 from groq import APIError, Groq
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from lembrai.agent import run_agent_turn
 from lembrai.chat import MODEL
@@ -20,6 +21,8 @@ from lembrai.history import Message, trimmed
 from lembrai.notes import NoteStore, as_context
 from lembrai.profile import build_system_prompt, load_profile
 from lembrai.tools import Toolbox
+
+logger = logging.getLogger(__name__)
 
 SseEvent = tuple[str, dict[str, object]]
 
@@ -37,7 +40,7 @@ class ChatMessage(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    messages: list[ChatMessage]
+    messages: list[ChatMessage] = Field(min_length=1)
 
 
 @asynccontextmanager
@@ -109,9 +112,12 @@ def chat(body: ChatRequest, deps: Deps = Depends(get_deps)) -> StreamingResponse
                     )
             except APIError as error:
                 emit("error", {"message": error.message})
+            except Exception:
+                logger.exception("chat turn failed")
+                emit("error", {"message": "erro interno ao processar a conversa"})
             finally:
-                # sentinel: without it the drain loop below never breaks,
-                # leaking the worker thread and this generator
+                # sentinel: unblocks the consumer drain loop below; without it
+                # events.get() would block forever once the worker finishes
                 events.put(None)
 
         threading.Thread(target=run, daemon=True).start()

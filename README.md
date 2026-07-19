@@ -57,7 +57,9 @@ the streaming groundwork for the web front (phase 4b). Install the API extras an
 ```
 
 `POST /chat` takes `{"messages": [{"role", "content"}, ...]}` and streams the reply as
-Server-Sent Events (`token`, `tool`, `tool_result`, `done`, `error`). The server keeps no
+Server-Sent Events: `token` (text delta), `tool` / `tool_result` / `tool_error` (a tool
+call, its result, or malformed arguments — non-terminal), `done` (final text plus token
+usage and cost), and `error` (terminal). The server keeps no
 session: the client owns the history and sends it on every request. `GET /health` returns
 `{"status": "ready"}` once the embedding model is loaded. The `GROQ_API_KEY` stays on the
 server (in its `.env`) and is never exposed to the browser.

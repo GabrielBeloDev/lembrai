@@ -1,9 +1,12 @@
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
+import httpx
 import pytest
 from conftest import RecordingClient, content_chunk, final_chunk, tool_call_chunk
 from fastapi.testclient import TestClient
+from groq import APIError
 
 from lembrai.api import Deps, app, get_deps
 from lembrai.embeddings import Embedder
@@ -14,13 +17,19 @@ FAKE_EMBEDDER = Embedder(
     embed_queries=lambda texts: [[0.0] for _ in texts],
     embed_passages=lambda texts: [[0.0] for _ in texts],
 )
+NONZERO_EMBEDDER = Embedder(
+    embed_queries=lambda texts: [[1.0] for _ in texts],
+    embed_passages=lambda texts: [[1.0] for _ in texts],
+)
 
 
-def make_deps(recording: RecordingClient, tmp_path: Path) -> Deps:
+def make_deps(
+    client: object, tmp_path: Path, embedder: Embedder = FAKE_EMBEDDER
+) -> Deps:
     return Deps(
-        client=recording,
+        client=client,
         note_store=NoteStore(
-            embedder=FAKE_EMBEDDER,
+            embedder=embedder,
             notes_dir=tmp_path / "notes",
             chroma_dir=tmp_path / "chroma",
         ),
@@ -30,6 +39,22 @@ def make_deps(recording: RecordingClient, tmp_path: Path) -> Deps:
             reminders_path=tmp_path / "reminders.json",
         ),
     )
+
+
+def raising_client(error: Exception) -> SimpleNamespace:
+    def create(**_: object) -> object:
+        raise error
+
+    return SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+    )
+
+
+def tool_round_stream() -> list[SimpleNamespace]:
+    return [
+        tool_call_chunk(0, call_id="c", name="list_events", arguments="{}"),
+        final_chunk(5, 1),
+    ]
 
 
 @pytest.fixture
@@ -116,3 +141,50 @@ def test_health_reports_ready(chat_client):
     response = chat_client(RecordingClient([])).get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ready"}
+
+
+def test_empty_messages_is_rejected(chat_client):
+    response = chat_client(RecordingClient([])).post("/chat", json={"messages": []})
+    assert response.status_code == 422
+
+
+def test_round_limit_emits_a_terminal_error(chat_client):
+    recording = RecordingClient([tool_round_stream() for _ in range(5)])
+    frames = parse_sse(post_chat(chat_client(recording), "entra em loop").text)
+    assert frames[-1][0] == "error"
+    assert "limite de rodadas" in frames[-1][1]["message"]
+
+
+def test_api_error_is_surfaced_as_error_event(chat_client):
+    error = APIError("boom", request=httpx.Request("POST", "http://x"), body=None)
+    frames = parse_sse(post_chat(chat_client(raising_client(error)), "oi").text)
+    assert frames[-1] == ("error", {"message": "boom"})
+
+
+def test_unexpected_error_is_reported_without_leaking_internals(chat_client):
+    response = post_chat(
+        chat_client(raising_client(RuntimeError("segredo interno"))), "oi"
+    )
+    assert "segredo interno" not in response.text
+    frames = parse_sse(response.text)
+    assert frames[-1] == ("error", {"message": "erro interno ao processar a conversa"})
+
+
+def test_notes_are_injected_as_system_context(tmp_path: Path):
+    recording = RecordingClient([[content_chunk("ok"), final_chunk(5, 1)]])
+    deps = make_deps(recording, tmp_path, embedder=NONZERO_EMBEDDER)
+    deps.note_store.add("A senha do wi-fi é girassol2026")
+    app.dependency_overrides[get_deps] = lambda: deps
+    try:
+        response = TestClient(app).post(
+            "/chat",
+            json={"messages": [{"role": "user", "content": "qual a senha do wifi?"}]},
+        )
+        assert response.status_code == 200
+        sent = recording.calls[0]["messages"]
+        assert sent[0]["role"] == "system"
+        assert any(
+            m["role"] == "system" and "girassol2026" in m["content"] for m in sent
+        )
+    finally:
+        app.dependency_overrides.clear()
