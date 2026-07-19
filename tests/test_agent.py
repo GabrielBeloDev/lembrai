@@ -28,7 +28,14 @@ def make_toolbox(tmp_path: Path) -> Toolbox:
     )
 
 
-def run(client, toolbox, on_chunk=None, on_tool=None, on_malformed_tool=None):
+def run(
+    client,
+    toolbox,
+    on_chunk=None,
+    on_tool=None,
+    on_malformed_tool=None,
+    on_tool_result=None,
+):
     return run_agent_turn(
         client,
         [{"role": "user", "content": "faz algo"}],
@@ -36,6 +43,7 @@ def run(client, toolbox, on_chunk=None, on_tool=None, on_malformed_tool=None):
         on_chunk=on_chunk or (lambda _: None),
         on_tool=on_tool or (lambda _name, _args: None),
         on_malformed_tool=on_malformed_tool or (lambda _name: None),
+        on_tool_result=on_tool_result or (lambda _name, _result: None),
     )
 
 
@@ -153,3 +161,21 @@ def test_malformed_arguments_do_not_reach_the_toolbox(tmp_path: Path):
 def test_agent_gives_up_after_the_round_limit(tmp_path: Path):
     text, _ = run(AlwaysToolClient(), make_toolbox(tmp_path))
     assert text is None
+
+
+def test_tool_result_is_reported_after_the_tool_call(tmp_path: Path):
+    client = RecordingClient(
+        [
+            [tool_call_chunk(0, call_id="call_1", name="list_events",
+                             arguments="{}")],
+            [content_chunk("Pronto.")],
+        ]
+    )
+    events: list[tuple[str, str]] = []
+    run(
+        client,
+        make_toolbox(tmp_path),
+        on_tool=lambda name, _args: events.append(("tool", name)),
+        on_tool_result=lambda name, _result: events.append(("tool_result", name)),
+    )
+    assert events == [("tool", "list_events"), ("tool_result", "list_events")]
