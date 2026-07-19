@@ -3,6 +3,8 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+from lembrai.reminders import REMINDERS_PATH, ReminderStore
+
 CALENDAR_PATH = Path("data/calendar.json")
 OUTBOX_DIR = Path("data/outbox")
 
@@ -56,6 +58,34 @@ TOOL_SCHEMAS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_reminder",
+            "description": (
+                "Cria um lembrete que será entregue ao usuário na data e hora "
+                "indicadas, sem ele precisar pedir de novo."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "description": "O que lembrar o usuário",
+                    },
+                    "date": {
+                        "type": "string",
+                        "description": "Data no formato YYYY-MM-DD",
+                    },
+                    "time": {
+                        "type": "string",
+                        "description": "Hora no formato HH:MM (opcional, padrão 09:00)",
+                    },
+                },
+                "required": ["message", "date"],
+            },
+        },
+    },
 ]
 
 
@@ -64,9 +94,11 @@ class Toolbox:
         self,
         calendar_path: Path = CALENDAR_PATH,
         outbox_dir: Path = OUTBOX_DIR,
+        reminders_path: Path = REMINDERS_PATH,
     ):
         self._calendar_path = calendar_path
         self._outbox_dir = outbox_dir
+        self._reminders = ReminderStore(reminders_path)
 
     def _load_events(self) -> list[dict[str, str | None]]:
         if not self._calendar_path.exists():
@@ -108,11 +140,23 @@ class Toolbox:
         )
         return f"E-mail para {to} salvo na caixa de saída local ({path})."
 
+    def create_reminder(
+        self, message: str, date: str, time: str | None = None
+    ) -> str:
+        clock = time or "09:00"
+        try:
+            due = datetime.strptime(f"{date} {clock}", "%Y-%m-%d %H:%M")
+        except (TypeError, ValueError):
+            return "Data ou hora em formato inválido: use YYYY-MM-DD e HH:MM."
+        self._reminders.add(message, due)
+        return f"Lembrete criado para {date} às {clock}: {message}"
+
     def execute(self, name: str, arguments: dict[str, object]) -> str:
         handlers = {
             "create_event": self.create_event,
             "list_events": self.list_events,
             "send_email": self.send_email,
+            "create_reminder": self.create_reminder,
         }
         handler = handlers.get(name)
         if handler is None:

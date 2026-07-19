@@ -46,8 +46,16 @@ Vocabulário canônico em [CONTEXT.md](./CONTEXT.md).
 
 ### Fase 4 — Proatividade + produto
 
-**Entrega**: Lembretes disparados sem pedido (scheduler + decisão do Assistente) e front em Next.js.
-**Aprende**: agente autônomo, agendamento, quando vale interromper o Usuário, integração IA ↔ produto.
+Dividida em dois incrementos para manter cada PR revisável.
+
+**4a — Lembretes autônomos (feito)**: Ferramenta `create_reminder` que o Assistente
+usa por linguagem natural; Lembretes persistidos em `data/reminders.json`; entrega dos
+vencidos no início da sessão do CLI e via `lembrai-check` (idempotente, para rodar em
+cron). Aprende: agente que age sem pedido no momento, agendamento, quando interromper.
+
+**4b — API + front Next.js**: expor o Assistente como API (FastAPI) e um front em
+Next.js consumindo. Decisão de arquitetura (como o front fala com a camada de IA) vira ADR.
+Aprende: integração IA ↔ produto.
 
 ### Fase 5 — Qualidade
 

@@ -17,6 +17,7 @@ dev = [
 
 [project.scripts]
 lembrai = "lembrai.cli:main"
+lembrai-check = "lembrai.check:main"
 
 [build-system]
 requires = ["setuptools>=68"]

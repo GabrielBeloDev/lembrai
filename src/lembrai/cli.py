@@ -1,11 +1,13 @@
 import os
 import sys
+from datetime import datetime
 
 from dotenv import load_dotenv
 from groq import APIError, Groq
 
 from lembrai.agent import run_agent_turn
 from lembrai.chat import MODEL
+from lembrai.check import due_messages
 from lembrai.cost import (
     SessionStats,
     Usage,
@@ -18,6 +20,7 @@ from lembrai.history import Message, trimmed
 from lembrai.notes import NoteMatch, NoteStore, as_context
 from lembrai.onboarding import ask_profile, save_profile
 from lembrai.profile import PROFILE_PATH, build_system_prompt, load_profile
+from lembrai.reminders import ReminderStore
 from lembrai.tools import Toolbox
 
 BANNER = (
@@ -175,10 +178,16 @@ def run_repl(
     return stats
 
 
+def deliver_due_reminders() -> None:
+    for line in due_messages(ReminderStore(), datetime.now()):
+        print(dim(line))
+
+
 def main() -> None:
     client = create_client()
     profile = load_profile()
     print(BANNER)
+    deliver_due_reminders()
     if profile is None:
         profile = offer_onboarding()
     print(dim("carregando índice de Notas (modelo de embeddings)..."))
