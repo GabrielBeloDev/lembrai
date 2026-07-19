@@ -67,7 +67,6 @@ def stream_reply(
                 on_chunk(delta.content)
             if delta.tool_calls:
                 _merge_tool_call_fragments(drafts, delta.tool_calls)
-        # usage arrives only on the final chunk, via Groq's x_groq extension
         if chunk.x_groq and chunk.x_groq.usage:
             usage = Usage(
                 prompt_tokens=chunk.x_groq.usage.prompt_tokens,

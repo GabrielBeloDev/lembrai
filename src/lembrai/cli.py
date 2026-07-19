@@ -90,7 +90,7 @@ def respond(
         )
 
     def warn_kept_actions() -> None:
-        # discarding the turn does not undo tools that already ran; say so
+        # discarding the turn does not undo tools that already ran
         if executed_tools:
             print(
                 dim(

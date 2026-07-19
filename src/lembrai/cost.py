@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
-# Reference prices in USD per 1M tokens (input, output) from https://groq.com/pricing.
-# Groq's free tier charges nothing; these exist to make token cost visible while learning.
+# USD per 1M tokens (input, output), from groq.com/pricing. Free tier is $0; cost is shown to make usage visible.
 PRICES_PER_MILLION: dict[str, tuple[float, float]] = {
     "llama-3.3-70b-versatile": (0.59, 0.79),
     "llama-3.1-8b-instant": (0.05, 0.08),
