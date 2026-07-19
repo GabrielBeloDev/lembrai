@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -8,9 +9,13 @@ from conftest import RecordingClient, content_chunk, final_chunk, tool_call_chun
 from fastapi.testclient import TestClient
 from groq import APIError
 
+from lembrai import api
 from lembrai.api import Deps, app, get_deps
 from lembrai.embeddings import Embedder
 from lembrai.notes import NoteStore
+from lembrai.onboarding import QUESTIONS, save_profile
+from lembrai.profile import load_profile
+from lembrai.reminders import ReminderStore
 from lembrai.tools import Toolbox
 
 FAKE_EMBEDDER = Embedder(
@@ -33,6 +38,7 @@ def make_deps(
             notes_dir=tmp_path / "notes",
             chroma_dir=tmp_path / "chroma",
         ),
+        reminder_store=ReminderStore(reminders_path=tmp_path / "reminders.json"),
         toolbox=Toolbox(
             calendar_path=tmp_path / "calendar.json",
             outbox_dir=tmp_path / "outbox",
@@ -188,3 +194,98 @@ def test_notes_are_injected_as_system_context(tmp_path: Path):
         )
     finally:
         app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def rest_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    profile_path = tmp_path / "profile.md"
+    monkeypatch.setattr(api, "load_profile", lambda: load_profile(profile_path))
+    monkeypatch.setattr(
+        api, "save_profile", lambda content: save_profile(content, profile_path)
+    )
+    deps = make_deps(RecordingClient([]), tmp_path)
+    app.dependency_overrides[get_deps] = lambda: deps
+    yield TestClient(app), deps
+    app.dependency_overrides.clear()
+
+
+def test_get_profile_without_profile_returns_null(rest_client):
+    client, _ = rest_client
+    assert client.get("/profile").json() == {"content": None}
+
+
+def test_post_profile_persists_and_is_readable(rest_client):
+    client, _ = rest_client
+    answers = ["Gabriel", "Dev, acordo cedo", "Café", "Lembrar de tudo"]
+    posted = client.post("/profile", json={"answers": answers})
+    assert posted.status_code == 200
+    content = posted.json()["content"]
+    assert "## Nome\nGabriel" in content
+    assert client.get("/profile").json()["content"] == content.strip()
+
+
+def test_post_profile_keeps_only_answered_sections(rest_client):
+    client, _ = rest_client
+    response = client.post("/profile", json={"answers": ["Gabriel", "", "", ""]})
+    content = response.json()["content"]
+    assert "## Nome\nGabriel" in content
+    assert "## Sobre" not in content
+
+
+def test_post_profile_all_blank_returns_null_and_saves_nothing(rest_client):
+    client, _ = rest_client
+    response = client.post("/profile", json={"answers": ["", "   ", ""]})
+    assert response.json() == {"content": None}
+    assert client.get("/profile").json() == {"content": None}
+
+
+def test_onboarding_questions_match_the_source(rest_client):
+    client, _ = rest_client
+    questions = client.get("/onboarding/questions").json()
+    assert len(questions) == len(QUESTIONS)
+    assert [q["title"] for q in questions] == [title for title, _ in QUESTIONS]
+    assert [q["question"] for q in questions] == [q for _, q in QUESTIONS]
+
+
+def test_post_note_creates_and_get_returns_it(rest_client):
+    client, _ = rest_client
+    created = client.post("/notes", json={"text": "comprar café"})
+    assert created.status_code == 200
+    note_id = created.json()["id"]
+    assert client.get("/notes").json() == [{"id": note_id, "text": "comprar café"}]
+
+
+def test_get_notes_lists_most_recent_first(rest_client):
+    client, deps = rest_client
+    first = deps.note_store.add("primeira nota")
+    second = deps.note_store.add("segunda nota")
+    listed = client.get("/notes").json()
+    assert [note["id"] for note in listed] == [second.stem, first.stem]
+    assert listed[0]["text"] == "segunda nota"
+
+
+def test_post_note_rejects_empty_text(rest_client):
+    client, _ = rest_client
+    assert client.post("/notes", json={"text": ""}).status_code == 422
+
+
+def test_get_reminders_is_empty_without_reminders(rest_client):
+    client, _ = rest_client
+    assert client.get("/reminders").json() == []
+
+
+def test_get_reminders_returns_created_sorted_by_due(rest_client):
+    client, deps = rest_client
+    deps.reminder_store.add("dentista", datetime(2026, 7, 25, 10, 0))
+    deps.reminder_store.add("mercado", datetime(2026, 7, 20, 9, 0))
+    reminders = client.get("/reminders").json()
+    assert [r["message"] for r in reminders] == ["mercado", "dentista"]
+    assert set(reminders[0]) == {"id", "message", "due", "created_at", "delivered"}
+
+
+def test_deliver_reminders_delivers_due_once(rest_client):
+    client, deps = rest_client
+    deps.reminder_store.add("beber água", datetime(2020, 1, 1, 8, 0))
+    first = client.post("/reminders/deliver").json()
+    assert first == {"delivered": ["⏰ Lembrete: beber água"]}
+    assert client.post("/reminders/deliver").json() == {"delivered": []}

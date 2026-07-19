@@ -34,6 +34,9 @@ class ReminderStore:
         raw = json.loads(self._path.read_text(encoding="utf-8"))
         return [Reminder(**item) for item in raw]
 
+    def all(self) -> list[Reminder]:
+        return self._load()
+
     def _save(self, reminders: list[Reminder]) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
         self._path.write_text(
