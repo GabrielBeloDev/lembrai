@@ -6,7 +6,9 @@ This is a learning-in-public project: building from LLM basics up to RAG, agents
 
 **Privacy by architecture**: your real data never leaves your machine (`data/`, git-ignored). The repo ships only the product and a fictional demo corpus.
 
-**Status**: phase 5b — optional Langfuse observability (phase 5 complete).
+**Status**: all roadmap phases (1–6) complete — CLI chat, local RAG, an agent with
+tools, autonomous reminders, a FastAPI + Next.js web app, an eval harness, optional
+Langfuse tracing, and a local LoRA fine-tuning experiment.
 
 ## Getting started
 
@@ -49,7 +51,7 @@ All personal data lives under `data/`, which never leaves your machine.
 ## API
 
 The same assistant is also exposed over HTTP by a thin, stateless FastAPI service —
-the streaming groundwork for the web front (phase 4b). Install the API extras and run it:
+the streaming backend the web front consumes. Install the API extras and run it:
 
 ```bash
 .venv/bin/pip install -e ".[dev,api]"
