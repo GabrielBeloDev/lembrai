@@ -100,10 +100,30 @@ o Langfuse batchear. Instalável via extra `pip install -e ".[observability]"`. 
 fase 5 está completa.**
 **Aprende**: observabilidade, custo/latência — LLMOps.
 
-### Fase 6 — Profundidade (opcional)
+### Fase 6 — Profundidade (opcional, feito)
 
-**Entrega**: fine-tune (LoRA) de um modelo pequeno rodando local no M5, ajustado ao formato de resposta do lembrai.
-**Aprende**: como treinamento funciona (nível conceitual aprofundado), LoRA, quantização, limites do fine-tuning.
+**Entrega (feito)**: experimento de fine-tune **LoRA** rodando 100% local no M-series (MLX),
+ajustando `Qwen2.5-0.5B-Instruct-4bit` ao estilo de resposta do lembrai. Laboratório à parte
+em [`finetune/`](./finetune/) — não integrado ao produto (que segue na Groq) e `mlx-lm` não é
+dependência do lembrai. Dataset sintético (70 treino / 12 validação), pipeline runnable
+(`run.sh` + `compare.py`) e docs didáticas.
+**Aprende (feito)**: como treinamento funciona por dentro — LoRA (adapters de baixo posto, só
+0,297% dos pesos treináveis), quantização 4-bit (base de 282 MB, pico de 1,4 GB de RAM),
+curva de loss e overfitting, e os limites do fine-tuning.
+
+**Resultados reais** (seed 42, ~20s de treino; detalhes em
+[`finetune/results.md`](./finetune/results.md)):
+- **Loss**: val 4,458 → 2,860 (mínimo no iter 50) → 3,012 no iter 120; train 2,916 → 0,006.
+  A val loss subindo depois do iter 50 com train loss → 0 é overfitting clássico de dataset
+  pequeno.
+- **Estilo transferiu** em prompts held-out: "Me lembra de regar as plantas" → *"Pronto, te
+  aviso daqui a 24 horas: regar as plantas..."*; "Tô sem tempo essa semana, me ajuda?" →
+  *"Sinto por isso. Quer só desabafar ou prefere que eu ajude a organizar o dia pra pesar
+  menos?"* — contra respostas longas e divagantes do modelo base.
+- **Limite honesto**: "Qual a capital da Argentina?" → o base acerta "Buenos Aires", o
+  ajustado responde "Camberra" (decorou o único exemplo de capital do dataset). Fine-tuning
+  muda **estilo/formato**, não **conhecimento factual** — para conhecimento, RAG. **Com isso
+  a fase 6 está completa.**
 
 ## Decisões em aberto
 

@@ -10,3 +10,11 @@ venv/
 node_modules/
 .next/
 .DS_Store
+
+# fine-tuning experiment (phase 6): weights, adapters and its dedicated venv are large
+finetune/adapters/
+finetune/models/
+finetune/.venv-mlx/
+# but the synthetic dataset is versioned (the unanchored `data/` rule above would hide it)
+!finetune/data/
+!finetune/data/**

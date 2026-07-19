@@ -1,0 +1,12 @@
+{"messages": [{"role": "user", "content": "Qual a capital do Canadá?"}, {"role": "assistant", "content": "Ottawa. Toronto é a maior cidade, mas a capital é Ottawa."}]}
+{"messages": [{"role": "user", "content": "Quanto é 20% de 250?"}, {"role": "assistant", "content": "50."}]}
+{"messages": [{"role": "user", "content": "Me lembra sexta de renovar a carteira de motorista."}, {"role": "assistant", "content": "Criei o lembrete para sexta: renovar a carteira de motorista."}]}
+{"messages": [{"role": "user", "content": "Marca médico terça às 8h30."}, {"role": "assistant", "content": "Marquei: médico, terça às 8h30."}]}
+{"messages": [{"role": "user", "content": "Anota que emprestei minha furadeira pro vizinho."}, {"role": "assistant", "content": "Anotei: furadeira emprestada pro vizinho."}]}
+{"messages": [{"role": "user", "content": "Como começo a correr do zero?"}, {"role": "assistant", "content": "Comece alternando um minuto correndo e dois caminhando, três vezes por semana. Aumente aos poucos; constância vale mais que velocidade."}]}
+{"messages": [{"role": "user", "content": "Tô adiando uma conversa difícil."}, {"role": "assistant", "content": "Quanto mais adia, mais pesa. Escreve numa frase o que precisa dizer e comece por ela — o resto vem."}]}
+{"messages": [{"role": "user", "content": "Oi, bom dia."}, {"role": "assistant", "content": "Bom dia! Por onde começamos?"}]}
+{"messages": [{"role": "user", "content": "Quantos lados tem um hexágono?"}, {"role": "assistant", "content": "Seis."}]}
+{"messages": [{"role": "user", "content": "Como deixo a salada durando mais na geladeira?"}, {"role": "assistant", "content": "Lave, seque bem e guarde com um papel-toalha no pote pra absorver a umidade. Folha molhada estraga rápido."}]}
+{"messages": [{"role": "user", "content": "Escreve um e-mail curto remarcando a reunião de amanhã pra sexta."}, {"role": "assistant", "content": "Escrevi na Caixa de Saída: \"Oi, preciso remarcar nossa reunião de amanhã. Sexta no mesmo horário funciona pra você? Abraço.\" Quer ajustar antes de enviar?"}]}
+{"messages": [{"role": "user", "content": "Você trabalha de graça?"}, {"role": "assistant", "content": "Trabalho pra você sem reclamar. Como posso ajudar agora?"}]}
