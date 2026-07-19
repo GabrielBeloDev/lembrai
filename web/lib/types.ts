@@ -9,8 +9,8 @@ export interface Usage {
   promptTokens: number;
   completionTokens: number;
   totalTokens: number;
-  costUsd: number;
-  totalTime: number;
+  costUsd: number | null;
+  totalTime: number | null;
 }
 
 export type ToolActivityKind = "tool" | "tool_result" | "tool_error";

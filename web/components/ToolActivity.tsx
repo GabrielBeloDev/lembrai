@@ -16,7 +16,7 @@ export function ToolActivity({ items }: ToolActivityProps) {
     <ul className={styles.toolActivity} aria-label="Atividade de Ferramentas">
       {items.map((item, index) => (
         <li key={index} className={styles.toolItem}>
-          <span className={styles.toolVerb}>{VERB_BY_KIND[item.kind]}</span>{" "}
+          <span>{VERB_BY_KIND[item.kind]}</span>{" "}
           <span className={styles.toolName}>{item.name}</span>
           {item.detail !== null && (
             <span className={styles.toolDetail}>: {item.detail}</span>

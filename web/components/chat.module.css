@@ -134,7 +134,7 @@
   padding: 12px 14px;
 }
 
-.typing span {
+.typing span[aria-hidden="true"] {
   width: 7px;
   height: 7px;
   border-radius: 50%;

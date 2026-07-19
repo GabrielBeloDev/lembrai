@@ -19,9 +19,16 @@ function describeToolDetail(value: unknown): string | null {
 }
 
 function formatUsage(usage: Usage): string {
-  const cost = usage.costUsd.toFixed(4);
-  const seconds = usage.totalTime.toFixed(2);
-  return `${usage.totalTokens} tokens · US$ ${cost} · ${seconds}s`;
+  const segments = [
+    `${usage.totalTokens} tokens (${usage.promptTokens} entrada / ${usage.completionTokens} saída)`,
+  ];
+  if (usage.costUsd !== null) {
+    segments.push(`~US$ ${usage.costUsd.toFixed(6)}`);
+  }
+  if (usage.totalTime !== null) {
+    segments.push(`${usage.totalTime.toFixed(2)}s`);
+  }
+  return segments.join(" · ");
 }
 
 export function Chat() {
@@ -130,7 +137,7 @@ export function Chat() {
         <p className={styles.subtitle}>Converse com o seu Assistente pessoal</p>
       </header>
 
-      <div className={styles.messages} role="log" aria-live="polite">
+      <div className={styles.messages} role="log" tabIndex={0} aria-label="Conversa">
         {showEmptyState && (
           <p className={styles.empty}>Comece a conversa com o seu Assistente.</p>
         )}
@@ -150,10 +157,11 @@ export function Chat() {
         )}
 
         {showTyping && (
-          <div className={styles.typing} aria-label="Assistente está digitando">
-            <span />
-            <span />
-            <span />
+          <div className={styles.typing} role="status">
+            <span aria-hidden="true" />
+            <span aria-hidden="true" />
+            <span aria-hidden="true" />
+            <span className={styles.visuallyHidden}>Assistente está digitando</span>
           </div>
         )}
 

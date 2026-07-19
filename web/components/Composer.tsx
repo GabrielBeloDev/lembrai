@@ -37,7 +37,6 @@ export function Composer({ value, disabled, onChange, onSend }: ComposerProps) {
         onKeyDown={handleKeyDown}
         placeholder="Escreva sua mensagem…"
         rows={1}
-        disabled={disabled}
         autoComplete="off"
       />
       <button

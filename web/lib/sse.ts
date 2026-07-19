@@ -12,17 +12,20 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
+function isNumberOrNull(value: unknown): value is number | null {
+  return value === null || isFiniteNumber(value);
+}
+
 function parseUsage(value: unknown): Usage | null {
   if (!isRecord(value)) return null;
   const { prompt_tokens, completion_tokens, total_tokens, cost_usd, total_time } =
     value;
-  const everyFieldIsNumber =
+  const tokenCountsAreValid =
     isFiniteNumber(prompt_tokens) &&
     isFiniteNumber(completion_tokens) &&
-    isFiniteNumber(total_tokens) &&
-    isFiniteNumber(cost_usd) &&
-    isFiniteNumber(total_time);
-  if (!everyFieldIsNumber) return null;
+    isFiniteNumber(total_tokens);
+  if (!tokenCountsAreValid) return null;
+  if (!isNumberOrNull(cost_usd) || !isNumberOrNull(total_time)) return null;
   return {
     promptTokens: prompt_tokens,
     completionTokens: completion_tokens,
