@@ -269,6 +269,11 @@ def test_post_note_rejects_empty_text(rest_client):
     assert client.post("/notes", json={"text": ""}).status_code == 422
 
 
+def test_post_note_rejects_whitespace_only_text(rest_client):
+    client, _ = rest_client
+    assert client.post("/notes", json={"text": "   \n"}).status_code == 422
+
+
 def test_get_reminders_is_empty_without_reminders(rest_client):
     client, _ = rest_client
     assert client.get("/reminders").json() == []

@@ -11,7 +11,7 @@ import uvicorn
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import StreamingResponse
 from groq import APIError, Groq
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from lembrai.agent import run_agent_turn
 from lembrai.chat import MODEL
@@ -54,6 +54,13 @@ class ProfileRequest(BaseModel):
 
 class NoteRequest(BaseModel):
     text: str = Field(min_length=1)
+
+    @field_validator("text")
+    @classmethod
+    def reject_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("a nota não pode ser vazia")
+        return value
 
 
 class ProfileResponse(BaseModel):
