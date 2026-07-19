@@ -22,7 +22,9 @@ Registro do run real. Reproduzível: `finetune/run.sh` (seed 42, determinístico
 | 120 | 0,006 | 3,012 |
 
 Train loss → ~0 (aprende os exemplos). Val loss cai até o iter 50 e depois sobe:
-overfitting num dataset pequeno.
+overfitting num dataset pequeno. O adapter entregue é o do iter 120 (não o mínimo em 50)
+de propósito, para mostrar a curva completa — na prática, early-stopping por volta do
+iter 50 seria o pick principiado.
 
 ## Antes / depois (prompts held-out, temperatura 0)
 

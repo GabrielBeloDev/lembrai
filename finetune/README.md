@@ -70,8 +70,10 @@ Isso é o que faz caber e rodar rápido num Mac de 24 GB de RAM unificada: model
 quantização + LoRA (que só adiciona 5,9 MB treináveis). O treino inteiro usou **1,4 GB de
 pico** — sobra folga. É por isso que dá pra treinar local, sem GPU de nuvem.
 
-> **QLoRA** é exatamente esta combinação: base **q**uantizada (congelada em 4-bit) + adapters
-> LoRA (treinados em precisão cheia por cima). É o que `mlx-lm` faz quando o `--model` é 4-bit.
+> A **ideia** do QLoRA é essa: base **q**uantizada (congelada em 4-bit) + adapters LoRA
+> (treinados em 16 bits, não quantizados) por cima — é o que o `mlx-lm` faz quando o `--model`
+> é 4-bit. Ressalva: o QLoRA original usa um 4-bit específico (NF4 + double-quant), enquanto o
+> `mlx-lm` usa quantização afim por grupos. A mecânica é a mesma; o formato de 4-bit, não.
 
 ### `--mask-prompt` — o que entra na loss
 
@@ -165,9 +167,11 @@ Curva de loss (seed 42, determinística):
 A **train loss despenca de 2,9 para ~0** (o modelo aprende os exemplos). A **val loss cai de
 4,46 para 2,86 no iter 50 e depois volta a subir** — sinal claro de **overfitting** num
 dataset pequeno: passado o iter ~50 ele começa a decorar os exemplos em vez de generalizar.
-Foi por isso que este run fica em 120 iters e LR baixo (5e-5); com 300 iters e LR 1e-4 o
-adapter chega a **decorar** e trocar fatos (respondia "Camberra" com mais frequência e
-embaralhava frases). Ver a exploração em [`results.md`](./results.md).
+O adapter entregue é o do **iter 120 de propósito** — para você ver a curva de overfit inteira,
+e mesmo passado o mínimo o estilo ainda transfere. O pick principiado seria **early-stopping por
+volta do iter 50** (o mínimo da val). Com 300 iters e LR mais alto (1e-4) o overfit piora: o
+adapter chega a **decorar** e trocar fatos (respondia "Camberra" com mais frequência e embaralhava
+frases). Ver a exploração em [`results.md`](./results.md).
 
 Antes/depois completos: seção [O que este experimento prova](#o-que-este-experimento-prova)
 acima, e o texto integral em [`results.md`](./results.md).
