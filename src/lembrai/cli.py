@@ -5,6 +5,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from groq import APIError, Groq
 
+from lembrai import observability
 from lembrai.agent import run_agent_turn
 from lembrai.chat import MODEL
 from lembrai.check import due_messages
@@ -173,6 +174,7 @@ def run_repl(
             continue
         history.append({"role": "assistant", "content": reply})
         stats.add_reply(usage)
+        observability.record_turn(user_input, reply, MODEL, usage)
         if usage is not None:
             print(dim(f"· {format_usage_line(MODEL, usage)}"))
     return stats
@@ -195,3 +197,4 @@ def main() -> None:
     stats = run_repl(client, build_system_prompt(profile), store, Toolbox())
     if stats.replies:
         print(dim(f"\nsessão: {format_session_stats(MODEL, stats)}"))
+    observability.flush()
