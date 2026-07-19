@@ -28,3 +28,25 @@ export type SseEvent =
   | { type: "tool_error"; name: string }
   | { type: "done"; text: string; usage: Usage | null }
   | { type: "error"; message: string };
+
+export interface Profile {
+  content: string | null;
+}
+
+export interface OnboardingQuestion {
+  title: string;
+  question: string;
+}
+
+export interface StoredNote {
+  id: string;
+  text: string;
+}
+
+export interface Reminder {
+  id: string;
+  message: string;
+  due: string;
+  createdAt: string;
+  delivered: boolean;
+}

@@ -1,27 +1,8 @@
 .chat {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 0 16px;
-}
-
-.header {
-  padding: 20px 4px 12px;
-  border-bottom: 1px solid var(--border);
-}
-
-.title {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 650;
-}
-
-.subtitle {
-  margin: 2px 0 0;
-  font-size: 0.85rem;
-  color: var(--text-muted);
+  flex: 1;
+  min-height: 0;
 }
 
 .messages {

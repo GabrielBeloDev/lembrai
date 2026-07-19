@@ -1,16 +1,5 @@
+import { isFiniteNumber, isRecord, isString } from "./guards";
 import type { SseEvent, Usage } from "./types";
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function isString(value: unknown): value is string {
-  return typeof value === "string";
-}
-
-function isFiniteNumber(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value);
-}
 
 function isNumberOrNull(value: unknown): value is number | null {
   return value === null || isFiniteNumber(value);
