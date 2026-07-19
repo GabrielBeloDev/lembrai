@@ -6,7 +6,7 @@ This is a learning-in-public project: building from LLM basics up to RAG, agents
 
 **Privacy by architecture**: your real data never leaves your machine (`data/`, git-ignored). The repo ships only the product and a fictional demo corpus.
 
-**Status**: phase 4b.3b — web UI for onboarding, notes and reminders (phase 4 complete).
+**Status**: phase 5b — optional Langfuse observability (phase 5 complete).
 
 ## Getting started
 
@@ -132,5 +132,29 @@ Run it (it indexes the demo notes into a throwaway directory, so it never touche
 
 It prints the overall accuracy, a breakdown by question kind, and every failure (the
 question, the expected answer, and the reply it got).
+
+## Observability (optional)
+
+Chat turns can be traced to [Langfuse](https://langfuse.com) — input/output, model, token
+usage, estimated cost and latency, one trace per turn. It is fully optional and off by
+default: without the keys (or without the package installed) the instrumentation is a
+silent no-op and nothing about the app changes.
+
+Enable it by installing the extra and setting the keys in your `.env`:
+
+```bash
+.venv/bin/pip install -e ".[observability]"
+```
+
+```dotenv
+LANGFUSE_PUBLIC_KEY=pk-...
+LANGFUSE_SECRET_KEY=sk-...
+LANGFUSE_HOST=https://cloud.langfuse.com   # or http://localhost:3000 to self-host
+```
+
+Point it at [Langfuse Cloud](https://cloud.langfuse.com) or a self-hosted instance (their
+Docker Compose). Traces go only to whichever Langfuse you configure — nothing leaves your
+machine unless you set the keys yourself. The CLI flushes pending traces on exit; the
+long-lived API server lets Langfuse batch them in the background.
 
 Run the tests with `.venv/bin/pytest`.

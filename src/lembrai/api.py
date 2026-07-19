@@ -13,6 +13,7 @@ from fastapi.responses import StreamingResponse
 from groq import APIError, Groq
 from pydantic import BaseModel, Field, field_validator
 
+from lembrai import observability
 from lembrai.agent import run_agent_turn
 from lembrai.chat import MODEL
 from lembrai.check import due_messages
@@ -144,6 +145,9 @@ def chat(body: ChatRequest, deps: Deps = Depends(get_deps)) -> StreamingResponse
                     emit("error", {"message": "limite de rodadas de ferramenta atingido"})
                 else:
                     usage = combined_usage(usages)
+                    observability.record_turn(
+                        body.messages[-1].content, text, MODEL, usage
+                    )
                     emit(
                         "done",
                         {"text": text, "usage": _usage_payload(usage)},

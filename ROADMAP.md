@@ -91,7 +91,13 @@ um acerto por substring é aceito sem consultar o juiz (fast-path não-discrimin
 acurácia dessas categorias não é totalmente verificada por juiz; recusas são sempre julgadas.
 Aprende: avaliação de LLMs, regressão de prompts, o que separa demo de produção.
 
-**5b — Observabilidade (pendente)**: Langfuse com traces, custo e latência.
+**5b — Observabilidade (feito)**: instrumentação opcional com Langfuse (v4) que envia um
+trace por turno de chat — input/output, modelo, tokens, custo estimado e latência. Guardada
+e local-first: sem as chaves `LANGFUSE_*` (ou sem o pacote instalado) vira no-op silencioso,
+então não altera o comportamento nem as dependências padrão. Fiada só nas bordas (CLI em
+`run_repl` e `POST /chat`), por turno; o CLI dá flush ao sair e o servidor (long-lived) deixa
+o Langfuse batchear. Instalável via extra `pip install -e ".[observability]"`. **Com isso a
+fase 5 está completa.**
 **Aprende**: observabilidade, custo/latência — LLMOps.
 
 ### Fase 6 — Profundidade (opcional)
