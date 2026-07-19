@@ -57,3 +57,11 @@ def test_deliver_due_leaves_future_reminders_pending(tmp_path: Path):
     store = ReminderStore(tmp_path / "reminders.json")
     store.add("futuro", datetime(2026, 8, 1, 9, 0))
     assert store.deliver_due(NOW) == []
+
+
+def test_deliver_due_marks_only_the_due_ones(tmp_path: Path):
+    store = ReminderStore(tmp_path / "reminders.json")
+    store.add("agora", datetime(2026, 7, 19, 8, 0))
+    store.add("depois", datetime(2026, 7, 20, 9, 0))
+    assert [r.message for r in store.deliver_due(NOW)] == ["agora"]
+    assert [r.message for r in store.deliver_due(datetime(2026, 7, 21))] == ["depois"]

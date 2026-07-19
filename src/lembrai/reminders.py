@@ -16,8 +16,6 @@ class Reminder:
 
 
 def select_due(reminders: list[Reminder], now: datetime) -> list[Reminder]:
-    # compare parsed datetimes, not ISO strings: due has seconds precision while
-    # now() carries microseconds, so a lexical compare would misfire on ties
     pending = [
         reminder
         for reminder in reminders
