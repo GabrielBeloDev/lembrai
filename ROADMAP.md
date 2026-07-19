@@ -65,8 +65,18 @@ Aprende: integração IA ↔ produto.
 
 ### Fase 5 — Qualidade
 
-**Entrega**: Corpus de Demo com perguntas de resposta conhecida; suíte de evals medindo taxa de acerto; Langfuse com traces, custo e latência.
-**Aprende**: avaliação de LLMs, regressão de prompts, observabilidade, custo/latência — o que separa demo de produção (LLMOps).
+Dividida em dois incrementos.
+
+**5a — Evals (feito)**: Corpus de Demo fictício (`demo/`: Perfil + Notas + `qa.json` com
+perguntas de resposta conhecida) e um harness de evals (`lembrai-eval`) que mede a taxa de
+acerto do Assistente sobre esse corpus — mesmo caminho de busca semântica (Notas) + Perfil
+do chat, scoring por substring com fallback de LLM-as-judge ancorado na referência, e
+detecção de recusa para perguntas sem resposta no corpus. Reporta acurácia geral e por tipo
+(fact/profile/refusal). Aprende: avaliação de LLMs, regressão de prompts, o que separa demo
+de produção.
+
+**5b — Observabilidade (pendente)**: Langfuse com traces, custo e latência.
+**Aprende**: observabilidade, custo/latência — LLMOps.
 
 ### Fase 6 — Profundidade (opcional)
 

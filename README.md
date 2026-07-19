@@ -6,7 +6,7 @@ This is a learning-in-public project: building from LLM basics up to RAG, agents
 
 **Privacy by architecture**: your real data never leaves your machine (`data/`, git-ignored). The repo ships only the product and a fictional demo corpus.
 
-**Status**: phase 4b.1 — chat over HTTP (thin FastAPI service).
+**Status**: phase 5a — evals over the demo corpus.
 
 ## Getting started
 
@@ -63,5 +63,28 @@ usage and cost), and `error` (terminal). The server keeps no
 session: the client owns the history and sends it on every request. `GET /health` returns
 `{"status": "ready"}` once the embedding model is loaded. The `GROQ_API_KEY` stays on the
 server (in its `.env`) and is never exposed to the browser.
+
+## Evals
+
+A small eval harness measures whether the assistant answers correctly over the fictional
+demo corpus (`demo/` — a made-up profile and notes, versioned for public demos and evals).
+It asks each question in `demo/qa.json`, runs the same retrieve-and-answer path as the chat,
+and scores the reply:
+
+- **fact / profile** questions: the expected answer must appear in the reply (case- and
+  whitespace-insensitive); on a miss, an LLM-as-judge decides whether a paraphrase is still
+  factually correct against the reference.
+- **refusal** questions (answers the corpus does not contain): the reply passes only if the
+  assistant admits it doesn't know instead of hallucinating.
+
+Run it (it indexes the demo notes into a throwaway directory, so it never touches `data/`):
+
+```bash
+.venv/bin/pip install -e ".[dev]"
+.venv/bin/lembrai-eval
+```
+
+It prints the overall accuracy, a breakdown by question kind, and every failure (the
+question, the expected answer, and the reply it got).
 
 Run the tests with `.venv/bin/pytest`.
